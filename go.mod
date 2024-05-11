@@ -1,6 +1,8 @@
 module terraform-plugin-sdk
 
-go 1.20
+go 1.21
+
+toolchain go1.22.2
 
 require github.com/hashicorp/terraform-plugin-sdk/v2 v2.33.0
 

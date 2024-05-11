@@ -1,1 +1,4 @@
 .DS_Store
+examples*
+terraform-jsc-beta
+terraform-provider-jsctf
