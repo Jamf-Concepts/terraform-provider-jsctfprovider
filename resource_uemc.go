@@ -218,7 +218,7 @@ func resourceUEMCDelete(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/identity-service/v1/connections/%s?customerId=%s", d.Id(), Customerid), nil)
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/config/%s?customerId=%s", Customerid, Customerid), nil)
 	if err != nil {
 		return err
 	}
