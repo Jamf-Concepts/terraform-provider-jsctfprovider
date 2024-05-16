@@ -53,8 +53,9 @@ func main() {
 				},
 				// Define the resources that this provider manages
 				ResourcesMap: map[string]*schema.Resource{
-					"jsc_oktaidp": resourceOktaIdp(),
-					"jsc_uemc":    resourceUEMC(),
+					"jsc_oktaidp":   resourceOktaIdp(),
+					"jsc_uemc":      resourceUEMC(),
+					"jsc_blockpage": resourceBlockPage(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
