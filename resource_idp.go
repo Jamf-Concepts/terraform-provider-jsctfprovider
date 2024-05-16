@@ -159,38 +159,8 @@ func resourceOktaIdpRead(d *schema.ResourceData, m interface{}) error {
 
 // Define the update function for the Okta  resource NOT IMPLIMENTED
 func resourceOktaIdpUpdate(d *schema.ResourceData, m interface{}) error {
-	// Construct the request body
-	vm := map[string]interface{}{
-		"name": d.Get("name").(string),
-		"size": d.Get("size").(string),
-	}
-	payload, err := json.Marshal(vm)
-	if err != nil {
-		return err
-	}
 
-	// Make a POST request to update an existing VM
-	resp, err := http.Post(fmt.Sprintf("https://api.example.com/vms/%s", d.Id()), "application/json", bytes.NewBuffer(payload))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Check the response status code
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to update VM: %s", resp.Status)
-	}
-
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
-
+	d.Set("requires_replace", true)
 	return nil
 }
 
