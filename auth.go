@@ -101,3 +101,23 @@ func authenticate() error {
 
 	return nil
 }
+
+func makeRequest(req *http.Request) (*http.Response, error) {
+	// Create a new HTTP client
+	client := &http.Client{}
+
+	// Send the request using the client
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-Xsrf-Token", xsrfToken)
+	req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
+	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return resp, nil
+
+}

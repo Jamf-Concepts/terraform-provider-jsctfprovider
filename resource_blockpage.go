@@ -64,24 +64,15 @@ func resourceBlockPageCreate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "additional information1")
 	}
-
-	// Make a POST request to create a new okta
-	client := &http.Client{}
 	req, err := http.NewRequest("PATCH", fmt.Sprintf("https://radar.wandera.com/gate/block-service/blocks/v1/customers/%s?customerId=%s", Customerid, Customerid), bytes.NewBuffer(payload))
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "additional information2")
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Xsrf-Token", xsrfToken)
-	req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
-	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
-	resp, err := client.Do(req)
+	resp, err := makeRequest((req))
+
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "additional information3")
 	}
-	defer resp.Body.Close()
-
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != 204 {
 		return fmt.Errorf("failed to create block page : %s", resp.Status+" "+string(payload))
@@ -192,19 +183,12 @@ func resourceBlockPageCDelete(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-
-	// Make a POST request to create a new okta
-	client := &http.Client{}
 	req, err := http.NewRequest("PATCH", fmt.Sprintf("https://radar.wandera.com/gate/block-service/blocks/v1/customers/%s?customerId=%s", Customerid, Customerid), bytes.NewBuffer(payload))
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Xsrf-Token", xsrfToken)
-	req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
-	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
-	resp, err := client.Do(req)
+	resp, err := makeRequest((req))
+
 	if err != nil {
 		return err
 	}

@@ -133,7 +133,6 @@ func resourceOktaIdpRead(d *schema.ResourceData, m interface{}) error {
 	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
 	resp, err := client.Do(req)
 
-	//resp, err := http.Get(fmt.Sprintf("https://radar.wandera.com/gate/identity-service/v1/connections?customerId=993ae0ee-4bd8-4325-bc5d-1db0ea45b4f6&type=OKTA"))
 	if err != nil {
 		return err
 	}
@@ -196,7 +195,7 @@ func resourceOktaIdpDelete(d *schema.ResourceData, m interface{}) error {
 
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != 204 {
-		return fmt.Errorf("failed to delete OktaIDP: %s %s %s", resp.Status, resp, req)
+		return fmt.Errorf("failed to delete OktaIDP: %v %v %v", resp.Status, resp, req)
 	}
 
 	// Clear the resource ID
