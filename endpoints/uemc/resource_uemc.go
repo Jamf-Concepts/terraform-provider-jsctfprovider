@@ -8,10 +8,11 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"jsctfprovider/internal/auth"
 )
 
 // Define the schema for the UEMC resource
-func resourceUEMC() *schema.Resource {
+func ResourceUEMC() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceUEMCCreate,
 		Read:   resourceUEMCRead,
@@ -40,13 +41,7 @@ func resourceUEMC() *schema.Resource {
 // Define the create function for the UEMC resource
 func resourceUEMCCreate(d *schema.ResourceData, m interface{}) error {
 
-	// Perform authentication if the authentication token is empty
-	if authToken == "" {
-		err := authenticate()
-		if err != nil {
-			return err
-		}
-	}
+
 
 	// Construct the request body
 	vm := map[string]interface{}{
@@ -71,18 +66,12 @@ func resourceUEMCCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	// Make a POST request to create a new okta
-	client := &http.Client{}
-	req, err := http.NewRequest("PUT", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/config/%s/emm-server?customerId=%s", Customerid, Customerid), bytes.NewBuffer(payload))
+	// Make a POST request to create a new uemc
+	req, err := http.NewRequest("PUT", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/config/{customerid}/emm-server"), bytes.NewBuffer(payload))
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Xsrf-Token", xsrfToken)
-	req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
-	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
-	resp, err := client.Do(req)
+	resp, err := auth.MakeRequest((req))
 	if err != nil {
 		return err
 	}
@@ -125,25 +114,13 @@ func resourceUEMCCreate(d *schema.ResourceData, m interface{}) error {
 func resourceUEMCRead(d *schema.ResourceData, m interface{}) error {
 	// Make a GET request to read the details of an existing Okta IDP
 
-	// Perform authentication if the authentication token is empty
-	if authToken == "" {
-		err := authenticate()
-		if err != nil {
-			return err
-		}
-	}
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/sync-state/%s?customerId=%s", Customerid, Customerid), nil)
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/sync-state/{customerid}"), nil)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Xsrf-Token", xsrfToken)
-	req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
-	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
-	resp, err := client.Do(req)
+	resp, err := auth.MakeRequest((req))
 
 	//resp, err := http.Get(fmt.Sprintf("https://radar.wandera.com/gate/identity-service/v1/connections?customerId=993ae0ee-4bd8-4325-bc5d-1db0ea45b4f6&type=OKTA"))
 	if err != nil {
@@ -180,27 +157,15 @@ func resourceUEMCUpdate(d *schema.ResourceData, m interface{}) error {
 func resourceUEMCDelete(d *schema.ResourceData, m interface{}) error {
 	// Make a DELETE request to delete an existing Okta
 
-	// Perform authentication if the authentication token is empty
-	if authToken == "" {
-		err := authenticate()
-		if err != nil {
-			return err
-		}
-	}
 
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/config/%s?customerId=%s", Customerid, Customerid), nil)
+
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/config/{customerid}"), nil)
 	if err != nil {
 		return err
 	}
 
 	// Send the request
-	client := &http.Client{}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Xsrf-Token", xsrfToken)
-	req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
-	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
-	resp, err := client.Do(req)
+	resp, err := auth.MakeRequest((req))
 	if err != nil {
 		return err
 	}

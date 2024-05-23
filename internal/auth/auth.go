@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"log"
+	"strings"
 )
 
 var authToken string
@@ -111,7 +112,8 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 	log.Println("incoming url is " + req.URL.Path)
 	req.URL.RawQuery += "customerId=" + holdCustomerid
 	log.Println("new url is " + req.URL.Path)
-	log.Println("new raw url is " + req.URL.RawPath)
+	req.URL.Path = strings.Replace(req.URL.Path, "{customerid}", holdCustomerid, -1)
+	log.Println("new raw url is " + req.URL.Path)
 	log.Println("raw host is " + string(req.URL.Host))
 
 	log.Println("session cookie  is " + sessionCookie)

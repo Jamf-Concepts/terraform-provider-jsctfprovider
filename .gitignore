@@ -2,3 +2,4 @@
 examples*
 terraform-jsc-beta
 terraform-provider-jsctf
+vendor*

@@ -7,6 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"jsctfprovider/endpoints/idp"
+	"jsctfprovider/endpoints/blockpages"
+	"jsctfprovider/endpoints/uemc"
 	"jsctfprovider/internal/auth"
 )
 
@@ -56,8 +58,8 @@ func main() {
 				// Define the resources that this provider manages
 				ResourcesMap: map[string]*schema.Resource{
 					"jsc_oktaidp":   idp.ResourceOktaIdp(),
-					//"jsc_uemc":      uemc.resourceUEMC(),
-					//"jsc_blockpage": blockpages.resourceBlockPage(),
+					"jsc_uemc":      uemc.ResourceUEMC(),
+					"jsc_blockpage": blockpages.ResourceBlockPage(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
