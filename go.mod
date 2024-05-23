@@ -1,4 +1,4 @@
-module terraform-plugin-sdk
+module jsctfprovider
 
 go 1.21
 

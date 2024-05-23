@@ -1,4 +1,4 @@
-package main
+package blockpages
 
 import (
 	"bytes"
@@ -8,10 +8,11 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"jsctfprovider/internal/auth"
 )
 
 // Define the schema for the blockpage resource - only datablock rn
-func resourceBlockPage() *schema.Resource {
+func ResourceBlockPage() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceBlockPageCreate,
 		Read:   resourceBlockPageRead,
@@ -36,13 +37,7 @@ func resourceBlockPage() *schema.Resource {
 // Define the create function for the UEMC resource
 func resourceBlockPageCreate(d *schema.ResourceData, m interface{}) error {
 
-	// Perform authentication if the authentication token is empty
-	if authToken == "" {
-		err := authenticate()
-		if err != nil {
-			return err
-		}
-	}
+
 
 	vm := map[string]interface{}{
 		"block": map[string]interface{}{
@@ -64,15 +59,16 @@ func resourceBlockPageCreate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "additional information1")
 	}
-	req, err := http.NewRequest("PATCH", fmt.Sprintf("https://radar.wandera.com/gate/block-service/blocks/v1/customers/%s?customerId=%s", Customerid, Customerid), bytes.NewBuffer(payload))
+	req, err := http.NewRequest("PATCH", fmt.Sprintf("https://radar.wandera.com/gate/block-service/blocks/v1/customers/{customerid}"), bytes.NewBuffer(payload))
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "additional information2")
 	}
-	resp, err := makeRequest((req))
+	resp, err := auth.MakeRequest((req))
 
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "additional information3")
 	}
+	defer resp.Body.Close()
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != 204 {
 		return fmt.Errorf("failed to create block page : %s", resp.Status+" "+string(payload))
@@ -101,25 +97,14 @@ func resourceBlockPageCreate(d *schema.ResourceData, m interface{}) error {
 func resourceBlockPageRead(d *schema.ResourceData, m interface{}) error {
 	// Make a GET request to read the details of an existing Okta IDP
 
-	// Perform authentication if the authentication token is empty
-	if authToken == "" {
-		err := authenticate()
-		if err != nil {
-			return err
-		}
-	}
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/block-service/blocks/v1/customers/%s?customerId=%s", Customerid, Customerid), nil)
+
+	
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/block-service/blocks/v1/customers/{customerid}"), nil)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Xsrf-Token", xsrfToken)
-	req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
-	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
-	resp, err := client.Do(req)
+	resp, err := auth.MakeRequest((req))
 
 	//resp, err := http.Get(fmt.Sprintf("https://radar.wandera.com/gate/identity-service/v1/connections?customerId=993ae0ee-4bd8-4325-bc5d-1db0ea45b4f6&type=OKTA"))
 	if err != nil {
@@ -155,13 +140,7 @@ func resourceBlockPageUpdate(d *schema.ResourceData, m interface{}) error {
 // Define the delete function for the block page - which doesn't really exist do we just reset back to default
 func resourceBlockPageCDelete(d *schema.ResourceData, m interface{}) error {
 
-	// Perform authentication if the authentication token is empty
-	if authToken == "" {
-		err := authenticate()
-		if err != nil {
-			return err
-		}
-	}
+
 
 	vm := map[string]interface{}{
 		"block": map[string]interface{}{
@@ -183,11 +162,11 @@ func resourceBlockPageCDelete(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest("PATCH", fmt.Sprintf("https://radar.wandera.com/gate/block-service/blocks/v1/customers/%s?customerId=%s", Customerid, Customerid), bytes.NewBuffer(payload))
+	req, err := http.NewRequest("PATCH", fmt.Sprintf("https://radar.wandera.com/gate/block-service/blocks/v1/customers/{customerid}"), bytes.NewBuffer(payload))
 	if err != nil {
 		return err
 	}
-	resp, err := makeRequest((req))
+	resp, err := auth.MakeRequest((req))
 
 	if err != nil {
 		return err
