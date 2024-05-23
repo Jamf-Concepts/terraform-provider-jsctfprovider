@@ -1,4 +1,4 @@
-package main
+package auth
 
 import (
 	"bytes"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"log"
 )
 
 var authToken string
@@ -13,8 +14,9 @@ var authToken string
 // Function to authenticate against the API
 var xsrfToken string
 var sessionCookie string
+var holdCustomerid string
 
-func authenticate() error {
+func Authenticate(DomainName string, Username string, Password string, Customerid string) error {
 
 	// Make a GET request to obtain cookies
 	resp, err := http.Get(fmt.Sprintf("https://%s/auth/v1/login-methods?email=%s", DomainName, Username))
@@ -98,13 +100,21 @@ func authenticate() error {
 			sessionCookie = cookie.Value
 		}
 	}
-
+	holdCustomerid = Customerid
 	return nil
 }
 
-func makeRequest(req *http.Request) (*http.Response, error) {
+func MakeRequest(req *http.Request) (*http.Response, error) {
 	// Create a new HTTP client
 	client := &http.Client{}
+	log.Println("Building the client")
+	log.Println("incoming url is " + req.URL.Path)
+	req.URL.RawQuery += "customerId=" + holdCustomerid
+	log.Println("new url is " + req.URL.Path)
+	log.Println("new raw url is " + req.URL.RawPath)
+	log.Println("raw host is " + string(req.URL.Host))
+
+	log.Println("session cookie  is " + sessionCookie)
 
 	// Send the request using the client
 	req.Header.Set("Content-Type", "application/json")
@@ -112,12 +122,12 @@ func makeRequest(req *http.Request) (*http.Response, error) {
 	req.Header.Set("X-Xsrf-Token", xsrfToken)
 	req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
 	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
-	resp, err := client.Do(req)
+	resp2, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	//defer resp2.Body.Close()
 
-	return resp, nil
+	return resp2, nil
 
 }
