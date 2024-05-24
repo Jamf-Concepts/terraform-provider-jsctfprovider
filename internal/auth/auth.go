@@ -108,10 +108,11 @@ func Authenticate(DomainName string, Username string, Password string, Customeri
 func MakeRequest(req *http.Request) (*http.Response, error) {
 	// Create a new HTTP client
 	client := &http.Client{}
-	log.Println("Building the client")
-	log.Println("incoming url is " + req.URL.Path)
+	log.Println("[INFO] Building the client")
+	log.Println("[INFO] incoming url is " + req.URL.Path)
 	req.URL.RawQuery += "customerId=" + holdCustomerid
-	log.Println("new url is " + req.URL.Path)
+
+	log.Println("new url query is " + req.URL.RawQuery)
 	req.URL.Path = strings.Replace(req.URL.Path, "{customerid}", holdCustomerid, -1)
 	log.Println("new raw url is " + req.URL.Path)
 	log.Println("raw host is " + string(req.URL.Host))
