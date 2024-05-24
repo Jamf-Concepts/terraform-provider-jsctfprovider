@@ -10,6 +10,7 @@ import (
 	"jsctfprovider/endpoints/blockpages"
 	"jsctfprovider/endpoints/uemc"
 	"jsctfprovider/endpoints/ztna"
+	"jsctfprovider/endpoints/routes"
 	"jsctfprovider/internal/auth"
 	
 )
@@ -66,6 +67,10 @@ func main() {
 					"jsc_blockpage": blockpages.ResourceBlockPage(),
 					"jsc_ztna": 	 ztna.Resourceztna(),
 
+				},
+				// Define the datasources
+				DataSourcesMap: map[string]*schema.Resource{
+					"jsc_routes":   routes.DataSourceRoutes(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
