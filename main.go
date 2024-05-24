@@ -3,13 +3,15 @@ package main
 import (
 	"fmt"
 	"os"
-
+	"log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"jsctfprovider/endpoints/idp"
 	"jsctfprovider/endpoints/blockpages"
 	"jsctfprovider/endpoints/uemc"
+	"jsctfprovider/endpoints/ztna"
 	"jsctfprovider/internal/auth"
+	
 )
 
 var (
@@ -26,6 +28,8 @@ func main() {
 	//if err != nil {
 	//	panic(fmt.Sprintf("failed to authenticate: %v", err))
 	//} do not auth here - we need to get credentials first
+	log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
+
 
 	// Create a new plugin with a specific provider
 	plugin.Serve(&plugin.ServeOpts{
@@ -60,6 +64,8 @@ func main() {
 					"jsc_oktaidp":   idp.ResourceOktaIdp(),
 					"jsc_uemc":      uemc.ResourceUEMC(),
 					"jsc_blockpage": blockpages.ResourceBlockPage(),
+					"jsc_ztna": 	 ztna.Resourceztna(),
+
 				},
 				ConfigureFunc: providerConfigure,
 			}
@@ -84,13 +90,13 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 }
 
 // GetClientPassword retrieves the 'password' value from the Terraform configuration.
-// If it's not present in the configuration, it attempts to fetch it from the JAMFPRO_PASSWORD environment variable.
+// If it's not present in the configuration, it attempts to fetch it from the JSC_PASSWORD environment variable.
 func GetClientPassword(d *schema.ResourceData) (string, error) {
 	password := d.Get("password").(string)
 	if password == "" {
 		password = os.Getenv("JSC_PASSWORD")
 		if password == "" {
-			return "", fmt.Errorf("password must be provided either as an environment variable (JAMFPRO_PASSWORD) or in the Terraform configuration")
+			return "", fmt.Errorf("password must be provided either as an environment variable (JSC_PASSWORD) or in the Terraform configuration")
 		}
 	}
 	return password, nil
