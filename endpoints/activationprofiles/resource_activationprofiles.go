@@ -98,7 +98,7 @@ type Data struct {
 	} `json:"capabilities"`
 }
 
-func makepayloadstruct(activationprofilename, idpconnectionid string) Data{
+func makepayloadstruct(activationprofilename string, idpconnectionid string, privateaccess bool, threatdefence bool, datapolicy bool) Data{
 	// Create an instance of the Data struct
 
 
@@ -123,9 +123,9 @@ func makepayloadstruct(activationprofilename, idpconnectionid string) Data{
 		// Additional capabilities
 		data.Capabilities.DeviceIdentity.Enabled = false
 		data.Capabilities.PhysicalAccess.Enabled = false
-		data.Capabilities.PrivateAccess.Enabled = true
-		data.Capabilities.DataPolicy.Enabled = true
-		data.Capabilities.ThreatDefence.Enabled = true
+		data.Capabilities.PrivateAccess.Enabled = privateaccess
+		data.Capabilities.DataPolicy.Enabled = datapolicy
+		data.Capabilities.ThreatDefence.Enabled = threatdefence
 		data.Capabilities.Wireguard.Enabled = false
 		data.Capabilities.Proxy.Enabled = false
 		data.Capabilities.Proxy.ControlledNetworkInterfaces = "CELLULAR_ONLY"
@@ -194,6 +194,21 @@ func ResourceActivationProfile() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"privateaccess": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default: true,
+			},
+			"threatdefence": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default: true,
+			},
+			"datapolicy": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default: true,
+			},
 
 			// Add more attributes as needed
 		},
@@ -203,7 +218,7 @@ func ResourceActivationProfile() *schema.Resource {
 
 // Define the create function for the UEMC resource
 func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
-	data := makepayloadstruct(d.Get("name").(string), d.Get("oktaconnectionid").(string))
+	data := makepayloadstruct(d.Get("name").(string), d.Get("oktaconnectionid").(string), d.Get("privateaccess").(bool), d.Get("threatdefence").(bool), d.Get("datapolicy").(bool) )
 
 	payload, err := json.Marshal(data)
 	if err != nil {
