@@ -11,6 +11,7 @@ import (
 	"jsctfprovider/endpoints/uemc"
 	"jsctfprovider/endpoints/ztna"
 	"jsctfprovider/endpoints/routes"
+	"jsctfprovider/endpoints/activationprofiles"
 	"jsctfprovider/internal/auth"
 	
 )
@@ -66,6 +67,7 @@ func main() {
 					"jsc_uemc":      uemc.ResourceUEMC(),
 					"jsc_blockpage": blockpages.ResourceBlockPage(),
 					"jsc_ztna": 	 ztna.Resourceztna(),
+					"jsc_ap":		 activationprofiles.ResourceActivationProfile(),
 
 				},
 				// Define the datasources
