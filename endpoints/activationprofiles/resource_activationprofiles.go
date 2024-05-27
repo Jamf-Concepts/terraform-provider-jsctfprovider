@@ -307,6 +307,8 @@ func resourceAPRead(d *schema.ResourceData, m interface{}) error {
 func resourceAPUpdate(d *schema.ResourceData, m interface{}) error {
 
 	d.Set("requires_replace", true)
+	resourceAPDelete(d, m)
+	resourceAPCreate(d, m)
 	return nil
 }
 
