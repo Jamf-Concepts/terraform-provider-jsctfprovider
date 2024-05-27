@@ -134,9 +134,12 @@ func resourceOktaIdpRead(d *schema.ResourceData, m interface{}) error {
 }
 
 // Define the update function for the Okta  resource NOT IMPLIMENTED
+
 func resourceOktaIdpUpdate(d *schema.ResourceData, m interface{}) error {
 
 	d.Set("requires_replace", true)
+	resourceOktaIdpDelete(d, m)
+	resourceOktaIdpCreate(d, m)
 	return nil
 }
 

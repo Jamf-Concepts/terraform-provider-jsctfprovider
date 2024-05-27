@@ -145,7 +145,7 @@ func resourceBlockPageRead(d *schema.ResourceData, m interface{}) error {
 // Define the update function for the UEMC - needs to be replace completely
 func resourceBlockPageUpdate(d *schema.ResourceData, m interface{}) error {
 	d.Set("requires_replace", true)
-
+	resourceBlockPageCreate(d, m)
 	return nil
 }
 

@@ -149,6 +149,9 @@ func resourceUEMCRead(d *schema.ResourceData, m interface{}) error {
 // Define the update function for the UEMC - needs to be replace completely
 func resourceUEMCUpdate(d *schema.ResourceData, m interface{}) error {
 	d.Set("requires_replace", true)
+	resourceUEMCDelete(d, m)
+	resourceUEMCCreate(d, m)
+
 
 	return nil
 }

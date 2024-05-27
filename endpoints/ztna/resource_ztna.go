@@ -170,14 +170,16 @@ func resourceztnaRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-// Define the update function for the UEMC - needs to be replace completely
+// Define the update function for the ZTNA - needs to be replace completely
 func resourceztnaUpdate(d *schema.ResourceData, m interface{}) error {
 	d.Set("requires_replace", true)
+	resourceztnaDelete(d, m)
+	resourceztnaCreate(d, m)
 
 	return nil
 }
 
-// Define the delete function for the block page - which doesn't really exist do we just reset back to default
+// Define the delete function for the ZTNA page 
 func resourceztnaDelete(d *schema.ResourceData, m interface{}) error {
 	// Retrieve the value of the "name" attribute from the resource configuration
 
