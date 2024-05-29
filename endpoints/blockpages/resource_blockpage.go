@@ -31,6 +31,18 @@ func ResourceBlockPage() *schema.Resource {
 				Optional: true,
 				Default: "Site Blocked",
 			},
+			"type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default: "block",
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
+					
+					if val != "block" && val != "secureBlock" && val != "cap" && val != "deviceRisk" && val != "deviceManagement"{ 
+					  errs = append(errs, fmt.Errorf("%q must be either block, secureBlock, cap, deviceRisk, or deviceManagement: got: %d", key, val))
+					}
+					return
+				  },
+			},
 			"show_classification": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -52,7 +64,7 @@ func resourceBlockPageCreate(d *schema.ResourceData, m interface{}) error {
 
 
 	vm := map[string]interface{}{
-		"block": map[string]interface{}{
+		d.Get("type").(string): map[string]interface{}{
 			"description":        d.Get("description").(string),
 			"enabled":            true,
 			"logo":               "iVBORw0KGgoAAAANSUhEUgAAAC0AAAAtCAMAAAANxBKoAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAS1BMVEVHcEz/OzD/LS3/Oy//NzL/OjD/OjD/OzD/Oy//OzD/OzD/OzD/OzD/OjD/OzH/OzD/PC//OzD/OzD/OzD/OTD/OjD/Oy//OzD/OzAH3jTpAAAAGHRSTlMARwIqCaCH6FNovbD6FTLxPMfWeg8fk9059WpCAAACU0lEQVRIx4VV2aKrIAwUFAFFQVDL/3/pDavB0nvSlxrHLJMJDMPbpl24eZ4luYa/7HKL8sU4E/Q/WLP6l3F3/oobseq4Jdl3I9zKI15240sN76zcHg81LJR1fDcwMfB/vurcbsBz8gYvUMM8dVLuFt6IL7Am/XZC1hYODj72kEaAQfcKhZIQuQcmvFKpKpOXbr59SlaIeVa8kGnuVQz1MRnNAbsmTxCo67FBueeFUeH9UkOLXugRpR+OHPyCCfaH672sDyJ/6rATF3J7f+Gy9JRygIqiba0i7Y2eZoDBALBArfmpZhKJM42e1U/4pAIrgZs521p5ysXuQtaNs/4TmySYp6f2keXB2zk4hZWx+r3Gcg/1J0Nz144O4degQxOZh9HGNZZCyDUs1ZJyuqqA1IpNYF02ktLhnCFNZDtMDM19SYWftkaLQY4iQuDRDbhwktS3TM1m+RQUZLI22gDnqDzfGjCXWU1VlychwsaeGZZOBI9BqTmrKWT7mAgLu4ALXUWLVwQvsH87EnYBU6ojXRP3aktfrXKn6Z98gWNqnRm/qyRbUhE4FB5oOiH4Hp+2FxqDYRQqTiuwMwE3n2er5BcYNMjTTIANtj28j+lvC37mAsePX9FMP16fLzBeXxLVSdAOuhf4zMylUgO8vtu010d7kLKq5dyZ5/Wwd/EOQWBwcHxriKD5I+ND30jIJ3vvNw0uiDCTKdUCjRuabkXYT/V1QpmkY36VewiqX1cbfb2TwzBduKHCPqfMvXXPGDqR2eVeKbltuNEW+fcdHvHQYHP8/gPvrjcrgOzcSAAAAABJRU5ErkJggg==",
@@ -155,7 +167,7 @@ func resourceBlockPageCDelete(d *schema.ResourceData, m interface{}) error {
 
 
 	vm := map[string]interface{}{
-		"block": map[string]interface{}{
+		d.Get("type").(string): map[string]interface{}{
 			"description":        "The site you are attempting to view has been blocked. If you would like more information please contact your administrator.",
 			"enabled":            true,
 			"logo":               "iVBORw0KGgoAAAANSUhEUgAAAC0AAAAtCAMAAAANxBKoAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAS1BMVEVHcEz/OzD/LS3/Oy//NzL/OjD/OjD/OzD/Oy//OzD/OzD/OzD/OzD/OjD/OzH/OzD/PC//OzD/OzD/OzD/OTD/OjD/Oy//OzD/OzAH3jTpAAAAGHRSTlMARwIqCaCH6FNovbD6FTLxPMfWeg8fk9059WpCAAACU0lEQVRIx4VV2aKrIAwUFAFFQVDL/3/pDavB0nvSlxrHLJMJDMPbpl24eZ4luYa/7HKL8sU4E/Q/WLP6l3F3/oobseq4Jdl3I9zKI15240sN76zcHg81LJR1fDcwMfB/vurcbsBz8gYvUMM8dVLuFt6IL7Am/XZC1hYODj72kEaAQfcKhZIQuQcmvFKpKpOXbr59SlaIeVa8kGnuVQz1MRnNAbsmTxCo67FBueeFUeH9UkOLXugRpR+OHPyCCfaH672sDyJ/6rATF3J7f+Gy9JRygIqiba0i7Y2eZoDBALBArfmpZhKJM42e1U/4pAIrgZs521p5ysXuQtaNs/4TmySYp6f2keXB2zk4hZWx+r3Gcg/1J0Nz144O4degQxOZh9HGNZZCyDUs1ZJyuqqA1IpNYF02ktLhnCFNZDtMDM19SYWftkaLQY4iQuDRDbhwktS3TM1m+RQUZLI22gDnqDzfGjCXWU1VlychwsaeGZZOBI9BqTmrKWT7mAgLu4ALXUWLVwQvsH87EnYBU6ojXRP3aktfrXKn6Z98gWNqnRm/qyRbUhE4FB5oOiH4Hp+2FxqDYRQqTiuwMwE3n2er5BcYNMjTTIANtj28j+lvC37mAsePX9FMP16fLzBeXxLVSdAOuhf4zMylUgO8vtu010d7kLKq5dyZ5/Wwd/EOQWBwcHxriKD5I+ND30jIJ3vvNw0uiDCTKdUCjRuabkXYT/V1QpmkY36VewiqX1cbfb2TwzBduKHCPqfMvXXPGDqR2eVeKbltuNEW+fcdHvHQYHP8/gPvrjcrgOzcSAAAAABJRU5ErkJggg==",
