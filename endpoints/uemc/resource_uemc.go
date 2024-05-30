@@ -176,7 +176,7 @@ func resourceUEMCDelete(d *schema.ResourceData, m interface{}) error {
 
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != 204 {
-		return fmt.Errorf("failed to delete UEMC: %v %v %v", resp.Status, resp, req)
+		fmt.Println("failed to delete UEMC but removing state regardless: %v %v %v", resp.Status, resp, req)
 	}
 
 	// Clear the resource ID
