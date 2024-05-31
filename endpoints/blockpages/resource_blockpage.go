@@ -25,11 +25,13 @@ func ResourceBlockPage() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default: "The site you are attempting to view has been blocked. If you would like more information please contact your administrator.",
+				Description: "Text presented to end-user.",
 			},
 			"title": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default: "Site Blocked",
+				Description: "Title of text.",
 			},
 			"type": {
 				Type:     schema.TypeString,

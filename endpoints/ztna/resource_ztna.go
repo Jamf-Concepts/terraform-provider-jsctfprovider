@@ -24,20 +24,24 @@ func Resourceztna() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Friendly name of ZTNA Access Policy.",
 			},
 			"type": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default: "ENTERPRISE",
+				Description: "Type of ZTNA Access Policy. ENTERPRISE or SAAS.",
 			},
 			"routeid": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "The routeid required for egress. Can be obtained from jsc_routes datasource.",
 			},
 			"hostnames": {
 				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Required: true,
+				Description: "Hostnames that this ZTNA Access Policy will capture.",
 			},
 			// Add more attributes as needed
 		},
