@@ -24,14 +24,17 @@ func ResourceUEMC() *schema.Resource {
 			"domain": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Full domain path of Jamf Pro instance.",
 			},
 			"clientsecret": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Client Secret of Jamf Pro API Integration.",
 			},
 			"clientid": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Client ID of Jamf Pro API Integration.",
 			},
 			// Add more attributes as needed
 		},

@@ -17,9 +17,9 @@ description: |-
 
 ### Required
 
-- `clientid` (String)
-- `name` (String)
-- `orgdomain` (String)
+- `clientid` (String) Client ID of Okta App.
+- `name` (String) Friendly name.
+- `orgdomain` (String) OrgDomain of Okta tenant
 
 ### Read-Only
 

@@ -24,14 +24,17 @@ func ResourceOktaIdp() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Friendly name.",
 			},
 			"orgdomain": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "OrgDomain of Okta tenant",
 			},
 			"clientid": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Client ID of Okta App.",
 			},
 			// Add more attributes as needed
 		},
