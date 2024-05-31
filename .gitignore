@@ -1,5 +1,6 @@
 .DS_Store
-examples*
 terraform-jsc-beta
 terraform-provider-jsctf
 vendor*
+tools/bin*
+private*
