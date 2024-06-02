@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
     "context"
     "github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-    "log"
 	"jsctfprovider/internal/auth"
 )
 //define type of route - don't use much but nice to keep for future use
@@ -64,14 +63,9 @@ func DataSourceRoutes() *schema.Resource {
 				Description: "The name of the route",
 			},
 			"id": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The unique identifier of the route datasource (internal to TF)",
-			},
-            "routeid": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The route identifier of the route",
+				Description: "The unique identifier of the route datasource set from JSC",
 			},
             "datacenter": {
 				Type:        schema.TypeString,
@@ -91,9 +85,9 @@ func DataSourceRoutes() *schema.Resource {
 func dataSourceRoutesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
     //routeName := d.Get("name").(string)
 
-    d.SetId("1") //need to set something for resource to exist
+    
     d.Set("routeid", "aaZZ")
-    log.Println("[INFO] I AM THE dataresourcedebug")
+    
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/api/gateways/vpn-routes?view=deployments_with_status&"), nil)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error converting making http request body"))
@@ -134,7 +128,7 @@ func dataSourceRoutesRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 		for _, ip := range response {
 			if strings.Contains(ip.Name, d.Get("name").(string)) {
-				d.Set("routeid", ip.ID)
+				d.SetId(ip.ID)
 				d.Set("shared", ip.Shared) 
 				d.Set("name", ip.Name)
 				d.Set("datacenter", ip.Deployments[0].Datacenter)
