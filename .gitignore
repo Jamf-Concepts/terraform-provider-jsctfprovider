@@ -4,3 +4,4 @@ terraform-provider-jsctf
 vendor*
 tools/bin*
 private*
+testing*

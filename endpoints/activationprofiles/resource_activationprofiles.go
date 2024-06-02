@@ -270,13 +270,13 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 
 }
 
-// Define the read function for the Okta resource
+// Define the read function for the AP resource
 func resourceAPRead(d *schema.ResourceData, m interface{}) error {
-	// Make a GET request to read the details of an existing Okta IDP
+	// Make a GET request to read the details of an existing AP
 
 
 
-	req, err := http.NewRequest("GET", ("https://radar.wandera.com/gate/identity-service/v1/connections"), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/activation-profile-service/v1/enrollment-links/%s", d.Id()), nil)
 	if err != nil {
 		return err
 	}
@@ -289,7 +289,7 @@ func resourceAPRead(d *schema.ResourceData, m interface{}) error {
 
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to read OKTA IDP info: %s", resp.Status)
+		return fmt.Errorf("failed to read AP info info: %s", resp.Status)
 	}
 
 	// Read the response body
