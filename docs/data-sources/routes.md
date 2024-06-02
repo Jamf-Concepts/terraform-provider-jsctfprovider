@@ -28,6 +28,5 @@ data "jsc_routes" "jscroute001" {
 ### Read-Only
 
 - `datacenter` (String) The datacenter of the route
-- `id` (Number) The unique identifier of the route datasource (internal to TF)
-- `routeid` (String) The route identifier of the route
+- `id` (String) The unique identifier of the route datasource set from JSC
 - `shared` (Boolean) If the route is shared or not
