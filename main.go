@@ -13,6 +13,7 @@ import (
 	"jsctfprovider/endpoints/routes"
 	"jsctfprovider/endpoints/activationprofiles"
 	"jsctfprovider/endpoints/categories"
+	"jsctfprovider/endpoints/groups"
 	"jsctfprovider/internal/auth"
 	
 )
@@ -85,6 +86,7 @@ func main() {
 				DataSourcesMap: map[string]*schema.Resource{
 					"jsc_routes":   	routes.DataSourceRoutes(),
 					"jsc_categories":   categories.DataSourceCategories(),
+					"jsc_groups":       groups.DataSourceGroups(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
