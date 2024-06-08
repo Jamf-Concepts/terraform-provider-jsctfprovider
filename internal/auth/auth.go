@@ -101,10 +101,64 @@ func Authenticate(DomainName string, Username string, Password string, Customeri
 			sessionCookie = cookie.Value
 		}
 	}
+
+	if Customerid == "empty" {
+		//Customerid not provided so attempt to find from endpiint
+		findCustomerid(DomainName)
+	} else {
 	holdCustomerid = Customerid
+	}
 	return nil
 }
 
+func findCustomerid(DomainName string) {
+	client := &http.Client{}
+	url := (fmt.Sprintf("https://%s/auth/v1/me", DomainName))
+	//req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/content-block-service/v1/customers/{customerid}/categories"), nil)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return 
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-Xsrf-Token", xsrfToken)
+	req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
+	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer resp.Body.Close()
+	// Check the response status code
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("customerid checking failed: %s", resp.Status)
+		return
+	}
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	// Parse the response JSON to get the customerid 
+	// Unmarshal JSON into a map[string]interface{}
+    var result map[string]interface{}
+    jsonerr := json.Unmarshal(body, &result)
+    if err != nil {
+        fmt.Println("Error:", jsonerr)
+        return
+    }
+
+    // Extract entityId
+    entityId := result["admin"].(map[string]interface{})["entityId"].(string)
+    fmt.Println("CusomterID:", entityId)
+	holdCustomerid = entityId
+}
 func MakeRequest(req *http.Request) (*http.Response, error) {
 	// Create a new HTTP client
 	client := &http.Client{}

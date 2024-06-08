@@ -69,8 +69,9 @@ func main() {
 					},
 					"customerid": {
 						Type:        schema.TypeString,
-						Required:    true,
-						Description: "The required customerID.",
+						Optional:    true,
+						Default:     "empty",
+						Description: "The optional customerID. If not provided, the provider will attempt to discover.",
 					},
 				},
 				// Define the resources that this provider manages
