@@ -37,3 +37,4 @@ resource "jsc_ap" "myaptry" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `supervisedappconfig` (String) Supervised Devices Managed App Config

@@ -211,6 +211,11 @@ func ResourceActivationProfile() *schema.Resource {
 				Optional: true,
 				Default: true,
 			},
+			"supervisedappconfig": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Supervised Devices Managed App Config",
+			},
 
 			// Add more attributes as needed
 		},
@@ -262,9 +267,7 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 
 	// Set the resource ID
 	d.SetId(response.Code)
-
-	// Set the resource ID
-	//d.SetId("example-vm-id")
+	d.Set("supervisedappconfig", getAPConfig(response.Code))
 
 	return nil
 
