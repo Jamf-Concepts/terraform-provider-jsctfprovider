@@ -10,8 +10,6 @@ import (
 	"strings"
 )
 
-var authToken string
-
 // Function to authenticate against the API
 var xsrfToken string
 var sessionCookie string
@@ -93,7 +91,6 @@ func Authenticate(DomainName string, Username string, Password string, Customeri
 	}
 
 	// Store the authentication token
-	authToken = data["token"]
 	authcookies := resp.Cookies()
 
 	for _, cookie := range authcookies {
