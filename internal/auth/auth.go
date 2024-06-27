@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"log"
+	"net/http"
 	"strings"
 )
 
@@ -106,7 +106,7 @@ func Authenticate(DomainName string, Username string, Password string, Customeri
 		//Customerid not provided so attempt to find from endpiint
 		findCustomerid(DomainName)
 	} else {
-	holdCustomerid = Customerid
+		holdCustomerid = Customerid
 	}
 	return nil
 }
@@ -119,7 +119,7 @@ func findCustomerid(DomainName string) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println("Error:", err)
-		return 
+		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
@@ -134,7 +134,7 @@ func findCustomerid(DomainName string) {
 	defer resp.Body.Close()
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("customerid checking failed: %s", resp.Status)
+		//fmt.Println("customerid checking failed: %s", resp.Status)
 		return
 	}
 
@@ -145,19 +145,83 @@ func findCustomerid(DomainName string) {
 		return
 	}
 
-	// Parse the response JSON to get the customerid 
+	// Parse the response JSON to get the customerid
 	// Unmarshal JSON into a map[string]interface{}
-    var result map[string]interface{}
-    jsonerr := json.Unmarshal(body, &result)
-    if err != nil {
-        fmt.Println("Error:", jsonerr)
-        return
-    }
+	var result map[string]interface{}
+	jsonerr := json.Unmarshal(body, &result)
+	if err != nil {
+		fmt.Println("Error:", jsonerr)
+		return
+	}
+	//check if login user is parent or customer type
+	if result["admin"].(map[string]interface{})["entityId"].(string) == "CUSTOMER" {
+		// Extract entityId
+		entityId := result["admin"].(map[string]interface{})["entityId"].(string)
+		fmt.Println("CusomterID:", entityId)
+		holdCustomerid = entityId
+	} else {
+		urlCheckParent := (fmt.Sprintf("https://%s/gate/user-service/customer/v2/customers/visible-for-admin", DomainName))
+		req, err := http.NewRequest("GET", urlCheckParent, nil)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Accept", "application/json")
+		req.Header.Set("X-Xsrf-Token", xsrfToken)
+		req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
+		req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+		defer resp.Body.Close()
+		// Check the response status code
+		if resp.StatusCode != http.StatusOK {
+			//fmt.Println("customerid checking failed: %s", resp.Status)
+			return
+		}
+		// Read the response body
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
 
-    // Extract entityId
-    entityId := result["admin"].(map[string]interface{})["entityId"].(string)
-    fmt.Println("CusomterID:", entityId)
-	holdCustomerid = entityId
+		// Parse the response JSON to get the customerid
+		// Unmarshal JSON into a map[string]interface{}
+		// Unmarshal JSON into an interface slice
+		var data []map[string]json.RawMessage
+		errmarshall := json.Unmarshal([]byte(body), &data)
+		if errmarshall != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+
+		// Filter and collect customerId where leaf is true
+		var customerIds []string
+		for _, customer := range data {
+			var leaf bool
+			err := json.Unmarshal(customer["leaf"], &leaf)
+			if err != nil {
+				fmt.Println("Error:", err)
+				continue
+			}
+
+			if leaf {
+				var customerId string
+				err := json.Unmarshal(customer["customerId"], &customerId)
+				if err != nil {
+					fmt.Println("Error:", err)
+					continue
+				}
+				customerIds = append(customerIds, customerId)
+			}
+		}
+		holdCustomerid = customerIds[0] // can a parent have more than 1 customer - well they can define it manually in the provider then
+	}
+
 }
 func MakeRequest(req *http.Request) (*http.Response, error) {
 	// Create a new HTTP client
