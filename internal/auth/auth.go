@@ -151,7 +151,7 @@ func findCustomerid(DomainName string) {
 		return
 	}
 	//check if login user is parent or customer type
-	if result["admin"].(map[string]interface{})["entityId"].(string) == "CUSTOMER" {
+	if result["admin"].(map[string]interface{})["entityType"].(string) == "CUSTOMER" {
 		// Extract entityId
 		entityId := result["admin"].(map[string]interface{})["entityId"].(string)
 		fmt.Println("CusomterID:", entityId)
