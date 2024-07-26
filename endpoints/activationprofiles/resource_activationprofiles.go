@@ -1,14 +1,15 @@
 package activationprofiles
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"bytes"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"jsctfprovider/internal/auth"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // Define the struct for the JSON data
@@ -26,42 +27,42 @@ type LicencedAmalgam struct {
 }
 
 type Management struct {
-	EffectiveState *string    `json:"effectiveState,omitempty"`
+	EffectiveState *string `json:"effectiveState,omitempty"`
 	LastUsed       *string `json:"lastUsed,omitempty"`
-	TimeZone       string     `json:"timeZone"`
+	TimeZone       string  `json:"timeZone"`
 }
 
 type Data struct {
-	Code                         interface{}           `json:"code"`
-	Name                         string                `json:"name"`
-	GroupId                      string                `json:"groupId"`
-	Used                         interface{}           `json:"used"`
-	Management                   Management            `json:"management"`
-	DeviceMode                   interface{}           `json:"deviceMode"`
-	Passcode                     interface{}           `json:"passcode"`
-	Errors                       map[string]interface{} `json:"errors"`
-	ExtraDeviceAttributes        interface{}           `json:"extraDeviceAttributes"`
-	ActiveTab                    string                `json:"activeTab"`
-	AvailableProxyInterfaces     []string              `json:"availableProxyInterfaces"`
-	SecureDnsDefaultMandatory    bool                  `json:"secureDnsDefaultMandatory"`
-	LocationServices             string                `json:"locationServices"`
-	CloudProxy                   string                `json:"cloudProxy"`
-	InAppDnsControl              string                `json:"inAppDnsControl"`
-	RootCertificates             RootCertificates      `json:"rootCertificates"`
-	HasFailed                    bool                  `json:"hasFailed"`
-	IsLoading                    bool                  `json:"isLoading"`
-	IsSaving                     bool                  `json:"isSaving"`
-	IsUpdating                   bool                  `json:"isUpdating"`
-	IsOptionsLoaded              bool                  `json:"isOptionsLoaded"`
-	IsLoadingOptions             bool                  `json:"isLoadingOptions"`
-	CanLeave                     bool                  `json:"canLeave"`
-	LicencedAmalgams             []LicencedAmalgam     `json:"licencedAmalgams"`
-	LicenceSpecifics             struct {
+	Code                      interface{}            `json:"code"`
+	Name                      string                 `json:"name"`
+	GroupId                   string                 `json:"groupId"`
+	Used                      interface{}            `json:"used"`
+	Management                Management             `json:"management"`
+	DeviceMode                interface{}            `json:"deviceMode"`
+	Passcode                  interface{}            `json:"passcode"`
+	Errors                    map[string]interface{} `json:"errors"`
+	ExtraDeviceAttributes     interface{}            `json:"extraDeviceAttributes"`
+	ActiveTab                 string                 `json:"activeTab"`
+	AvailableProxyInterfaces  []string               `json:"availableProxyInterfaces"`
+	SecureDnsDefaultMandatory bool                   `json:"secureDnsDefaultMandatory"`
+	LocationServices          string                 `json:"locationServices"`
+	CloudProxy                string                 `json:"cloudProxy"`
+	InAppDnsControl           string                 `json:"inAppDnsControl"`
+	RootCertificates          RootCertificates       `json:"rootCertificates"`
+	HasFailed                 bool                   `json:"hasFailed"`
+	IsLoading                 bool                   `json:"isLoading"`
+	IsSaving                  bool                   `json:"isSaving"`
+	IsUpdating                bool                   `json:"isUpdating"`
+	IsOptionsLoaded           bool                   `json:"isOptionsLoaded"`
+	IsLoadingOptions          bool                   `json:"isLoadingOptions"`
+	CanLeave                  bool                   `json:"canLeave"`
+	LicencedAmalgams          []LicencedAmalgam      `json:"licencedAmalgams"`
+	LicenceSpecifics          struct {
 		EligibleForCloudProxy bool `json:"eligibleForCloudProxy"`
 	} `json:"licenceSpecifics"`
 	Idp struct {
-		Type             string      `json:"type"`
-		ConnectionId     string      `json:"connectionId"`
+		Type               string      `json:"type"`
+		ConnectionId       string      `json:"connectionId"`
 		ExternalIdAdoption interface{} `json:"externalIdAdoption"`
 	} `json:"idp"`
 	Capabilities struct {
@@ -85,7 +86,7 @@ type Data struct {
 			Enabled bool `json:"enabled"`
 		} `json:"wireguard"`
 		Proxy struct {
-			Enabled                 bool   `json:"enabled"`
+			Enabled                     bool   `json:"enabled"`
 			ControlledNetworkInterfaces string `json:"controlledNetworkInterfaces"`
 		} `json:"proxy"`
 		SecureDns struct {
@@ -98,9 +99,8 @@ type Data struct {
 	} `json:"capabilities"`
 }
 
-func makepayloadstruct(activationprofilename string, idpconnectionid string, privateaccess bool, threatdefence bool, datapolicy bool) Data{
+func makepayloadstruct(activationprofilename string, idpconnectionid string, privateaccess bool, threatdefence bool, datapolicy bool) Data {
 	// Create an instance of the Data struct
-
 
 	data := Data{
 		Name:             activationprofilename,
@@ -119,29 +119,31 @@ func makepayloadstruct(activationprofilename string, idpconnectionid string, pri
 			EligibleForCloudProxy bool `json:"eligibleForCloudProxy"`
 		}{EligibleForCloudProxy: false},
 	}
+	if !threatdefence && !datapolicy {
+		data.InAppDnsControl = "DISABLED" //need to turn-off if only PA selected
+	}
+	// Additional capabilities
+	data.Capabilities.DeviceIdentity.Enabled = false
+	data.Capabilities.PhysicalAccess.Enabled = false
+	data.Capabilities.PrivateAccess.Enabled = privateaccess
+	data.Capabilities.DataPolicy.Enabled = datapolicy
+	data.Capabilities.ThreatDefence.Enabled = threatdefence
+	data.Capabilities.Wireguard.Enabled = false
+	data.Capabilities.Proxy.Enabled = false
+	data.Capabilities.Proxy.ControlledNetworkInterfaces = "CELLULAR_ONLY"
+	data.Capabilities.SecureDns.Enabled = false
+	data.Capabilities.SecureDns.Mandatory = true
+	data.Capabilities.OnDevice.Enabled = false
 
-		// Additional capabilities
-		data.Capabilities.DeviceIdentity.Enabled = false
-		data.Capabilities.PhysicalAccess.Enabled = false
-		data.Capabilities.PrivateAccess.Enabled = privateaccess
-		data.Capabilities.DataPolicy.Enabled = datapolicy
-		data.Capabilities.ThreatDefence.Enabled = threatdefence
-		data.Capabilities.Wireguard.Enabled = false
-		data.Capabilities.Proxy.Enabled = false
-		data.Capabilities.Proxy.ControlledNetworkInterfaces = "CELLULAR_ONLY"
-		data.Capabilities.SecureDns.Enabled = false
-		data.Capabilities.SecureDns.Mandatory = true
-		data.Capabilities.OnDevice.Enabled = false
+	// Additional IDP data
+	data.Idp.Type = "OKTA"
+	data.Idp.ConnectionId = idpconnectionid
+	data.Idp.ExternalIdAdoption = nil
 
-		// Additional IDP data
-		data.Idp.Type = "OKTA"
-		data.Idp.ConnectionId = idpconnectionid
-		data.Idp.ExternalIdAdoption = nil
-
-		//management
-		data.Management.TimeZone = "America/Los_Angeles"
-		data.Management.EffectiveState = nil
-		data.Management.LastUsed = nil
+	//management
+	data.Management.TimeZone = "America/Los_Angeles"
+	data.Management.EffectiveState = nil
+	data.Management.LastUsed = nil
 
 	// Populate Licenced Amalgams
 	data.LicencedAmalgams = []LicencedAmalgam{
@@ -187,29 +189,29 @@ func ResourceActivationProfile() *schema.Resource {
 		// Define the attributes of the okta resource
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "Friendly name.",
 			},
 			"oktaconnectionid": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "Okta Connection ID.",
 			},
 			"privateaccess": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default: true,
+				Default:  true,
 			},
 			"threatdefence": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default: true,
+				Default:  true,
 			},
 			"datapolicy": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default: true,
+				Default:  true,
 			},
 			"supervisedappconfig": {
 				Type:        schema.TypeString,
@@ -222,10 +224,9 @@ func ResourceActivationProfile() *schema.Resource {
 	}
 }
 
-
 // Define the create function for the UEMC resource
 func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
-	data := makepayloadstruct(d.Get("name").(string), d.Get("oktaconnectionid").(string), d.Get("privateaccess").(bool), d.Get("threatdefence").(bool), d.Get("datapolicy").(bool) )
+	data := makepayloadstruct(d.Get("name").(string), d.Get("oktaconnectionid").(string), d.Get("privateaccess").(bool), d.Get("threatdefence").(bool), d.Get("datapolicy").(bool))
 
 	payload, err := json.Marshal(data)
 	if err != nil {
@@ -277,8 +278,6 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 func resourceAPRead(d *schema.ResourceData, m interface{}) error {
 	// Make a GET request to read the details of an existing AP
 
-
-
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/activation-profile-service/v1/enrollment-links/%s", d.Id()), nil)
 	if err != nil {
 		return err
@@ -320,8 +319,6 @@ func resourceAPUpdate(d *schema.ResourceData, m interface{}) error {
 // need to apply this function
 func resourceAPDelete(d *schema.ResourceData, m interface{}) error {
 	// Make a DELETE request to delete an existing AP
-
-
 
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/activation-profile-service/v1/enrollment-links/%s", d.Id()), nil)
 	if err != nil {
