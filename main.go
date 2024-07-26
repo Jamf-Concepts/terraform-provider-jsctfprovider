@@ -2,20 +2,20 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"log"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"jsctfprovider/endpoints/idp"
-	"jsctfprovider/endpoints/blockpages"
-	"jsctfprovider/endpoints/uemc"
-	"jsctfprovider/endpoints/ztna"
-	"jsctfprovider/endpoints/routes"
 	"jsctfprovider/endpoints/activationprofiles"
+	"jsctfprovider/endpoints/blockpages"
 	"jsctfprovider/endpoints/categories"
 	"jsctfprovider/endpoints/groups"
+	"jsctfprovider/endpoints/idp"
+	"jsctfprovider/endpoints/routes"
+	"jsctfprovider/endpoints/uemc"
+	"jsctfprovider/endpoints/ztna"
 	"jsctfprovider/internal/auth"
-	
+	"log"
+	"os"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
 
 // Run "go generate" to format example terraform files and generate the docs for the registry/website
@@ -44,7 +44,6 @@ func main() {
 	//} do not auth here - we need to get credentials first
 	log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
 
-
 	// Create a new plugin with a specific provider
 	plugin.Serve(&plugin.ServeOpts{
 		ProviderFunc: func() *schema.Provider {
@@ -59,7 +58,7 @@ func main() {
 					"username": {
 						Type:        schema.TypeString,
 						Required:    true,
-						Description: "The JSC username used for authentication.",
+						Description: "The JSC username used for authentication. Must be local account - SSO or SAML not supported.",
 					},
 					"password": {
 						Type:        schema.TypeString,
@@ -79,15 +78,14 @@ func main() {
 					"jsc_oktaidp":   idp.ResourceOktaIdp(),
 					"jsc_uemc":      uemc.ResourceUEMC(),
 					"jsc_blockpage": blockpages.ResourceBlockPage(),
-					"jsc_ztna": 	 ztna.Resourceztna(),
-					"jsc_ap":		 activationprofiles.ResourceActivationProfile(),
-
+					"jsc_ztna":      ztna.Resourceztna(),
+					"jsc_ap":        activationprofiles.ResourceActivationProfile(),
 				},
 				// Define the datasources
 				DataSourcesMap: map[string]*schema.Resource{
-					"jsc_routes":   	routes.DataSourceRoutes(),
-					"jsc_categories":   categories.DataSourceCategories(),
-					"jsc_groups":       groups.DataSourceGroups(),
+					"jsc_routes":     routes.DataSourceRoutes(),
+					"jsc_categories": categories.DataSourceCategories(),
+					"jsc_groups":     groups.DataSourceGroups(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
@@ -105,8 +103,10 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	Username = d.Get("username").(string)
 	Password = d.Get("password").(string)
 	Customerid = d.Get("customerid").(string)
-	auth.Authenticate(DomainName, Username, Password, Customerid)
-
+	err := auth.Authenticate(DomainName, Username, Password, Customerid)
+	if err != nil {
+		return nil, err
+	}
 
 	return nil, nil
 }
