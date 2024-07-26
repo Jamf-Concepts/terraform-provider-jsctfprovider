@@ -26,6 +26,8 @@ terraform {
 
 provider "jsc" {
   # Configure provider-specific settings if needed
+  # Only local email accounts are supported. No SSO or SAML
+  # CustomerID is optional
   username   = "wanderauth@jsc.com"
   password   = "passwordhere"
   customerid = "993ae0ee-4bd8-4325-bc5d-1db0ea45b4f6"
@@ -38,7 +40,7 @@ provider "jsc" {
 ### Required
 
 - `password` (String, Sensitive) The JSC password used for authentication.
-- `username` (String) The JSC username used for authentication.
+- `username` (String) The JSC username used for authentication. Must be local account - SSO or SAML not supported.
 
 ### Optional
 

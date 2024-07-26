@@ -74,7 +74,7 @@ func Authenticate(DomainName string, Username string, Password string, Customeri
 
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("authentication failed: %s", resp.Status)
+		return fmt.Errorf("authentication failed: %s. This provider only support local email:pass combinations and not any SSO/SAML credentials", resp.Status)
 	}
 
 	// Read the response body
