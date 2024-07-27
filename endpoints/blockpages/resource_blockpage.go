@@ -6,11 +6,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sync"
 
 	"jsctfprovider/internal/auth"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+// Create a global mutex need to lock patch requests
+var mu sync.Mutex
 
 // Define the schema for the blockpage resource - only datablock rn
 func ResourceBlockPage() *schema.Resource {
@@ -88,6 +92,9 @@ func resourceBlockPageCreate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "additional information2")
 	}
+	// Lock the mutex to ensure only one patch can run this function at a time
+	mu.Lock()
+	defer mu.Unlock()
 	resp, err := auth.MakeRequest((req))
 
 	if err != nil {
@@ -186,6 +193,9 @@ func resourceBlockPageCDelete(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
+	//lock to ensure only one patch can occur at one time
+	mu.Lock()
+	defer mu.Unlock()
 	resp, err := auth.MakeRequest((req))
 
 	if err != nil {
