@@ -26,10 +26,11 @@ resource "jsc_blockpage" "myblockpage" {
 ### Optional
 
 - `description` (String) Text presented to end-user.
+- `logo` (String) Base64 encoding of PNG image
 - `show_classification` (Boolean)
 - `show_requesturl` (Boolean)
 - `title` (String) Title of text.
-- `type` (String)
+- `type` (String) Type of block page. 'cap' for Data Cap, 'secureBlock' for Security Block, 'deviceRisk' for Device Risk Block, 'deviceManagement' for lack of MDM block
 
 ### Read-Only
 
