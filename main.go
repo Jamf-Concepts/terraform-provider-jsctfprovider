@@ -6,6 +6,7 @@ import (
 	"jsctfprovider/endpoints/blockpages"
 	"jsctfprovider/endpoints/categories"
 	"jsctfprovider/endpoints/groups"
+	"jsctfprovider/endpoints/hostnamemapping"
 	"jsctfprovider/endpoints/idp"
 	"jsctfprovider/endpoints/routes"
 	"jsctfprovider/endpoints/uemc"
@@ -83,9 +84,10 @@ func main() {
 				},
 				// Define the datasources
 				DataSourcesMap: map[string]*schema.Resource{
-					"jsc_routes":     routes.DataSourceRoutes(),
-					"jsc_categories": categories.DataSourceCategories(),
-					"jsc_groups":     groups.DataSourceGroups(),
+					"jsc_routes":          routes.DataSourceRoutes(),
+					"jsc_categories":      categories.DataSourceCategories(),
+					"jsc_groups":          groups.DataSourceGroups(),
+					"jsc_hostnamemapping": hostnamemapping.DataSourceHostnameMapping(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
