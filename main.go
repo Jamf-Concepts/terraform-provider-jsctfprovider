@@ -76,11 +76,12 @@ func main() {
 				},
 				// Define the resources that this provider manages
 				ResourcesMap: map[string]*schema.Resource{
-					"jsc_oktaidp":   idp.ResourceOktaIdp(),
-					"jsc_uemc":      uemc.ResourceUEMC(),
-					"jsc_blockpage": blockpages.ResourceBlockPage(),
-					"jsc_ztna":      ztna.Resourceztna(),
-					"jsc_ap":        activationprofiles.ResourceActivationProfile(),
+					"jsc_oktaidp":         idp.ResourceOktaIdp(),
+					"jsc_uemc":            uemc.ResourceUEMC(),
+					"jsc_blockpage":       blockpages.ResourceBlockPage(),
+					"jsc_ztna":            ztna.Resourceztna(),
+					"jsc_ap":              activationprofiles.ResourceActivationProfile(),
+					"jsc_hostnamemapping": hostnamemapping.ResourceHostnameMapping(),
 				},
 				// Define the datasources
 				DataSourcesMap: map[string]*schema.Resource{
