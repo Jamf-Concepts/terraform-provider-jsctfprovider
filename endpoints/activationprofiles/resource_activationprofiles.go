@@ -119,9 +119,7 @@ func makepayloadstruct(activationprofilename string, idpconnectionid string, pri
 			EligibleForCloudProxy bool `json:"eligibleForCloudProxy"`
 		}{EligibleForCloudProxy: false},
 	}
-	if !threatdefence && !datapolicy {
-		data.InAppDnsControl = "DISABLED" //need to turn-off if only PA selected
-	}
+
 	// Additional capabilities
 	data.Capabilities.DeviceIdentity.Enabled = false
 	data.Capabilities.PhysicalAccess.Enabled = false
@@ -218,6 +216,16 @@ func ResourceActivationProfile() *schema.Resource {
 				Computed:    true,
 				Description: "Supervised Devices Managed App Config",
 			},
+			"supervisedplist": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Supervised Devices Managed App Config",
+			},
+			"unsupervisedappconfig": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "UnSupervised Devices Managed App Config",
+			},
 
 			// Add more attributes as needed
 		},
@@ -268,7 +276,9 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 
 	// Set the resource ID
 	d.SetId(response.Code)
-	d.Set("supervisedappconfig", getAPConfig(response.Code))
+	d.Set("supervisedappconfig", getAPSupervisedManagedAppConfig(response.Code))
+	d.Set("supervisedplist", getAPSupervisedPlist(response.Code))
+	d.Set("unsupervisedappconfig", getAPUnSupervisedManagedAppConfig(response.Code))
 
 	return nil
 
