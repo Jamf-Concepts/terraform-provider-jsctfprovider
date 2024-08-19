@@ -221,12 +221,32 @@ func ResourceActivationProfile() *schema.Resource {
 			"supervisedplist": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Supervised Devices Managed App Config",
+				Description: "Supervised Devices Configuration Profile Plist",
 			},
 			"unsupervisedappconfig": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "UnSupervised Devices Managed App Config",
+			},
+			"unsupervisedplist": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "UnSupervised Devices Configuration Profile Plist",
+			},
+			"byodappconfig": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "BYODevice Managed App Config",
+			},
+			"byodplist": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "BYODevice Configuration Profile Plist",
+			},
+			"macosplist": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "macOS Configuration Profile Plist",
 			},
 
 			// Add more attributes as needed
