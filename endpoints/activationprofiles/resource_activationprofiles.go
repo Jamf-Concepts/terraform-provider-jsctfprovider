@@ -262,7 +262,7 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "marshaling json")
 	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("https://radar.wandera.com/gate/activation-profile-service/v2/enrollment-links"), bytes.NewBuffer(payload))
+	req, err := http.NewRequest("POST", "https://radar.wandera.com/gate/activation-profile-service/v2/enrollment-links", bytes.NewBuffer(payload))
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "additional information2")
 	}
