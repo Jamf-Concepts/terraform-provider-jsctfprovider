@@ -301,6 +301,10 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 	d.Set("supervisedappconfig", getAPSupervisedManagedAppConfig(response.Code))
 	d.Set("supervisedplist", getAPSupervisedPlist(response.Code))
 	d.Set("unsupervisedappconfig", getAPUnSupervisedManagedAppConfig(response.Code))
+	d.Set("unsupervisedplist", getAPUnSupervisedPlist(response.Code))
+	d.Set("byodappconfig", getAPBYODManagedAppConfig(response.Code))
+	d.Set("byodplist", getAPBYODPlist(response.Code))
+	d.Set("macosplist", getAPmacOSPlist(response.Code))
 
 	return nil
 
