@@ -38,3 +38,5 @@ resource "jsc_ap" "myaptry" {
 
 - `id` (String) The ID of this resource.
 - `supervisedappconfig` (String) Supervised Devices Managed App Config
+- `supervisedplist` (String) Supervised Devices Managed App Config
+- `unsupervisedappconfig` (String) UnSupervised Devices Managed App Config

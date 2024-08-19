@@ -218,6 +218,36 @@ func ResourceActivationProfile() *schema.Resource {
 				Computed:    true,
 				Description: "Supervised Devices Managed App Config",
 			},
+			"supervisedplist": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Supervised Devices Configuration Profile Plist",
+			},
+			"unsupervisedappconfig": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "UnSupervised Devices Managed App Config",
+			},
+			"unsupervisedplist": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "UnSupervised Devices Configuration Profile Plist",
+			},
+			"byodappconfig": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "BYODevice Managed App Config",
+			},
+			"byodplist": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "BYODevice Configuration Profile Plist",
+			},
+			"macosplist": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "macOS Configuration Profile Plist",
+			},
 
 			// Add more attributes as needed
 		},
@@ -232,7 +262,7 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "marshaling json")
 	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("https://radar.wandera.com/gate/activation-profile-service/v2/enrollment-links"), bytes.NewBuffer(payload))
+	req, err := http.NewRequest("POST", "https://radar.wandera.com/gate/activation-profile-service/v2/enrollment-links", bytes.NewBuffer(payload))
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "additional information2")
 	}
@@ -268,7 +298,13 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 
 	// Set the resource ID
 	d.SetId(response.Code)
-	d.Set("supervisedappconfig", getAPConfig(response.Code))
+	d.Set("supervisedappconfig", getAPSupervisedManagedAppConfig(response.Code))
+	d.Set("supervisedplist", getAPSupervisedPlist(response.Code))
+	d.Set("unsupervisedappconfig", getAPUnSupervisedManagedAppConfig(response.Code))
+	d.Set("unsupervisedplist", getAPUnSupervisedPlist(response.Code))
+	d.Set("byodappconfig", getAPBYODManagedAppConfig(response.Code))
+	d.Set("byodplist", getAPBYODPlist(response.Code))
+	d.Set("macosplist", getAPmacOSPlist(response.Code))
 
 	return nil
 
