@@ -119,7 +119,9 @@ func makepayloadstruct(activationprofilename string, idpconnectionid string, pri
 			EligibleForCloudProxy bool `json:"eligibleForCloudProxy"`
 		}{EligibleForCloudProxy: false},
 	}
-
+	if !threatdefence && !datapolicy {
+		data.InAppDnsControl = "DISABLED" //need to turn-off if only PA selected
+	}
 	// Additional capabilities
 	data.Capabilities.DeviceIdentity.Enabled = false
 	data.Capabilities.PhysicalAccess.Enabled = false
