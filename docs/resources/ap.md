@@ -36,7 +36,11 @@ resource "jsc_ap" "myaptry" {
 
 ### Read-Only
 
+- `byodappconfig` (String) BYODevice Managed App Config
+- `byodplist` (String) BYODevice Configuration Profile Plist
 - `id` (String) The ID of this resource.
+- `macosplist` (String) macOS Configuration Profile Plist
 - `supervisedappconfig` (String) Supervised Devices Managed App Config
-- `supervisedplist` (String) Supervised Devices Managed App Config
+- `supervisedplist` (String) Supervised Devices Configuration Profile Plist
 - `unsupervisedappconfig` (String) UnSupervised Devices Managed App Config
+- `unsupervisedplist` (String) UnSupervised Devices Configuration Profile Plist
