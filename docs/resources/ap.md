@@ -16,6 +16,7 @@ description: |-
 resource "jsc_ap" "myaptry" {
   name             = "myfirstap"
   oktaconnectionid = "663693e20cf02a72600bccf9"
+  idptype          = "OKTA"
   datapolicy       = false
 }
 ```
@@ -25,18 +26,23 @@ resource "jsc_ap" "myaptry" {
 
 ### Required
 
-- `name` (String) Friendly name.
-- `oktaconnectionid` (String) Okta Connection ID.
+- `name` (String) Friendly name
 
 ### Optional
 
 - `datapolicy` (Boolean)
+- `idptype` (String) Allowed values of 'OKTA', 'None, or 'NetworkRelay'. If NetworkRelay is selected, only Private Access will be enabled
+- `oktaconnectionid` (String) Okta Connection ID. Required when idptype is set to OKTA
 - `privateaccess` (Boolean)
 - `threatdefence` (Boolean)
 
 ### Read-Only
 
+- `byodappconfig` (String) BYODevice Managed App Config
+- `byodplist` (String) BYODevice Configuration Profile Plist
 - `id` (String) The ID of this resource.
+- `macosplist` (String) macOS Configuration Profile Plist
 - `supervisedappconfig` (String) Supervised Devices Managed App Config
-- `supervisedplist` (String) Supervised Devices Managed App Config
+- `supervisedplist` (String) Supervised Devices Configuration Profile Plist
 - `unsupervisedappconfig` (String) UnSupervised Devices Managed App Config
+- `unsupervisedplist` (String) UnSupervised Devices Configuration Profile Plist
