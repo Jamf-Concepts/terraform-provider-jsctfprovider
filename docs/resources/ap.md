@@ -16,6 +16,7 @@ description: |-
 resource "jsc_ap" "myaptry" {
   name             = "myfirstap"
   oktaconnectionid = "663693e20cf02a72600bccf9"
+  idptype          = "OKTA"
   datapolicy       = false
 }
 ```
@@ -25,12 +26,13 @@ resource "jsc_ap" "myaptry" {
 
 ### Required
 
-- `name` (String) Friendly name.
-- `oktaconnectionid` (String) Okta Connection ID.
+- `name` (String) Friendly name
 
 ### Optional
 
 - `datapolicy` (Boolean)
+- `idptype` (String) Allowed values of 'OKTA', 'None, or 'NetworkRelay'. If NetworkRelay is selected, only Private Access will be enabled
+- `oktaconnectionid` (String) Okta Connection ID. Required when idptype is set to OKTA
 - `privateaccess` (Boolean)
 - `threatdefence` (Boolean)
 

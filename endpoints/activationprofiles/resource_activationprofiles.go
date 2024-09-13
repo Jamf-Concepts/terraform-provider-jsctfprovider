@@ -330,6 +330,27 @@ func makepayloadstructNR(activationprofilename string) DataNR {
 
 }
 
+// Define the validation function
+func validateIdP(v interface{}, k string) (ws []string, errors []error) {
+	allowedStatuses := map[string]struct{}{
+		"OKTA":         {},
+		"NetworkRelay": {},
+		"None":         {},
+	}
+
+	value, ok := v.(string)
+	if !ok {
+		errors = append(errors, fmt.Errorf("%q must be a string", k))
+		return
+	}
+
+	if _, valid := allowedStatuses[value]; !valid {
+		errors = append(errors, fmt.Errorf("%q must be one of %v, got %q", k, []string{"OKTA", "NetworkRelay", "None"}, value))
+	}
+
+	return
+}
+
 // Define the schema for the activation resource - only resource
 func ResourceActivationProfile() *schema.Resource {
 	return &schema.Resource{
@@ -343,22 +364,24 @@ func ResourceActivationProfile() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Friendly name.",
+				Description: "Friendly name",
+			},
+			"idptype": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateIdP,
+				Default:      "None",
+				Description:  "Allowed values of 'OKTA', 'None, or 'NetworkRelay'. If NetworkRelay is selected, only Private Access will be enabled",
 			},
 			"oktaconnectionid": {
 				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Okta Connection ID.",
+				Optional:    true,
+				Description: "Okta Connection ID. Required when idptype is set to OKTA",
 			},
 			"privateaccess": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
-			},
-			"networkrelay": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
 			},
 			"threatdefence": {
 				Type:     schema.TypeBool,
@@ -415,7 +438,7 @@ func ResourceActivationProfile() *schema.Resource {
 func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 	var payload []byte
 	var err error // Declare `err` outside of the `if` block
-	if !d.Get("networkrelay").(bool) {
+	if d.Get("idptype").(string) == "OKTA" {
 		data := makepayloadstruct(d.Get("name").(string), d.Get("oktaconnectionid").(string), d.Get("privateaccess").(bool), d.Get("threatdefence").(bool), d.Get("datapolicy").(bool))
 		payload, err = json.Marshal(data)
 		if err != nil {
