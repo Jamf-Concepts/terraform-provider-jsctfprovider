@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"jsctfprovider/internal/auth"
 
@@ -78,6 +79,12 @@ type Data struct {
 		ThreatDefence struct {
 			Enabled bool `json:"enabled"`
 		} `json:"threatDefence"`
+		VulnerabilityManagement struct {
+			Enabled bool `json:"enabled"`
+		} `json:"vulnerabilityManagement"`
+		NetworkSecurity struct {
+			Enabled bool `json:"enabled"`
+		} `json:"networkSecurity"`
 		DataPolicy struct {
 			Enabled bool `json:"enabled"`
 		} `json:"dataPolicy"`
@@ -170,6 +177,77 @@ type DataNR struct {
 	} `json:"capabilities"`
 }
 
+type DataNoIdP struct {
+	Code                      interface{}            `json:"code"`
+	Name                      string                 `json:"name"`
+	GroupId                   string                 `json:"groupId"`
+	Used                      interface{}            `json:"used"`
+	Management                Management             `json:"management"`
+	Passcode                  interface{}            `json:"passcode"`
+	Errors                    map[string]interface{} `json:"errors"`
+	ExtraDeviceAttributes     interface{}            `json:"extraDeviceAttributes"`
+	Idp                       interface{}            `json:"idp"`
+	ActiveTab                 string                 `json:"activeTab"`
+	AvailableProxyInterfaces  []string               `json:"availableProxyInterfaces"`
+	SecureDnsDefaultMandatory bool                   `json:"secureDnsDefaultMandatory"`
+	LocationServices          string                 `json:"locationServices"`
+	CloudProxy                string                 `json:"cloudProxy"`
+	InAppDnsControl           string                 `json:"inAppDnsControl"`
+	RootCertificates          RootCertificates       `json:"rootCertificates"`
+	HasFailed                 bool                   `json:"hasFailed"`
+	IsLoading                 bool                   `json:"isLoading"`
+	IsSaving                  bool                   `json:"isSaving"`
+	IsUpdating                bool                   `json:"isUpdating"`
+	IsOptionsLoaded           bool                   `json:"isOptionsLoaded"`
+	IsLoadingOptions          bool                   `json:"isLoadingOptions"`
+	CanLeave                  bool                   `json:"canLeave"`
+	LicencedAmalgams          []LicencedAmalgam      `json:"licencedAmalgams"`
+	LicenceSpecifics          struct {
+		EligibleForCloudProxy bool `json:"eligibleForCloudProxy"`
+	} `json:"licenceSpecifics"`
+	Capabilities struct {
+		PrivateAccess struct {
+			Enabled bool `json:"enabled"`
+		} `json:"privateAccess"`
+		ThreatDefence struct {
+			Enabled bool `json:"enabled"`
+		} `json:"threatDefence"`
+		VulnerabilityManagement struct {
+			Enabled bool `json:"enabled"`
+		} `json:"vulnerabilityManagement"`
+		NetworkSecurity struct {
+			Enabled bool `json:"enabled"`
+		} `json:"networkSecurity"`
+		DataPolicy struct {
+			Enabled bool `json:"enabled"`
+		} `json:"dataPolicy"`
+		DeviceIdentity struct {
+			Enabled        bool     `json:"enabled"`
+			TrustConsumers []string `json:"trustConsumers"`
+		} `json:"deviceIdentity"`
+		PhysicalAccess struct {
+			Enabled bool `json:"enabled"`
+		} `json:"physicalAccess"`
+		NetworkRelay struct {
+			Enabled bool `json:"enabled"`
+		} `json:"networkRelay"`
+		Wireguard struct {
+			Enabled bool `json:"enabled"`
+		} `json:"wireguard"`
+		Proxy struct {
+			Enabled                     bool   `json:"enabled"`
+			ControlledNetworkInterfaces string `json:"controlledNetworkInterfaces"`
+		} `json:"proxy"`
+		SecureDns struct {
+			Enabled   bool `json:"enabled"`
+			Mandatory bool `json:"mandatory"`
+		} `json:"secureDns"`
+		OnDevice struct {
+			Enabled bool `json:"enabled"`
+		} `json:"onDevice"`
+	} `json:"capabilities"`
+}
+
 func makepayloadstruct(activationprofilename string, idpconnectionid string, privateaccess bool, threatdefence bool, datapolicy bool) Data {
 	// Create an instance of the Data struct
 
@@ -198,7 +276,9 @@ func makepayloadstruct(activationprofilename string, idpconnectionid string, pri
 	data.Capabilities.PhysicalAccess.Enabled = false
 	data.Capabilities.PrivateAccess.Enabled = privateaccess
 	data.Capabilities.DataPolicy.Enabled = datapolicy
-	data.Capabilities.ThreatDefence.Enabled = threatdefence
+	data.Capabilities.ThreatDefence.Enabled = false
+	data.Capabilities.NetworkSecurity.Enabled = threatdefence
+	data.Capabilities.VulnerabilityManagement.Enabled = true
 	data.Capabilities.Wireguard.Enabled = false
 	data.Capabilities.Proxy.Enabled = false
 	data.Capabilities.Proxy.ControlledNetworkInterfaces = "CELLULAR_ONLY"
@@ -215,6 +295,81 @@ func makepayloadstruct(activationprofilename string, idpconnectionid string, pri
 	if !threatdefence && !datapolicy {
 		data.InAppDnsControl = "DISABLED" //need to turn-off if only PA selected
 	}
+
+	//management
+	data.Management.TimeZone = "America/Los_Angeles"
+	data.Management.EffectiveState = nil
+	data.Management.LastUsed = nil
+
+	// Populate Licenced Amalgams
+	data.LicencedAmalgams = []LicencedAmalgam{
+		{
+			ServiceCapabilityCombination: []string{"deviceIdentity", "dataPolicy", "privateAccess"},
+			CloudProxy:                   nil,
+			Platforms:                    []string{"Mac"},
+			InAppDnsControl:              []string{"REQUIRED"},
+			RootCertificates:             "OPTIONAL",
+			DefaultLocationServices:      "BEST_EFFORT",
+		},
+		{
+			ServiceCapabilityCombination: []string{"threatDefence"},
+			CloudProxy:                   nil,
+			Platforms:                    []string{"ChromeOS", "iOS", "Windows", "Galaxy", "Android", "Mac"},
+			InAppDnsControl:              []string{"REQUIRED", "OPTIONAL"},
+			RootCertificates:             "OPTIONAL",
+			DefaultLocationServices:      "DISABLED",
+		},
+		// Add more Licenced Amalgams as needed...
+	}
+
+	// Marshal the struct into JSON
+	jsonData, err := json.MarshalIndent(data, "", "    ")
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		//return
+	}
+
+	// Print the JSON data
+	fmt.Println(string(jsonData))
+	return data
+
+}
+
+func makepayloadstructnoidp(activationprofilename string, threatdefence bool, datapolicy bool) DataNoIdP {
+	// Create an instance of the Data struct
+
+	data := DataNoIdP{
+		Name:             activationprofilename,
+		GroupId:          "DEFAULT",
+		ActiveTab:        "INTUNE",
+		LocationServices: "BEST_EFFORT",
+		CloudProxy:       "NONE",
+		InAppDnsControl:  "REQUIRED",
+		RootCertificates: RootCertificates{
+			Enabled: true,
+		},
+		HasFailed: false,
+		IsLoading: false,
+		// Populate other fields as needed...
+		LicenceSpecifics: struct {
+			EligibleForCloudProxy bool `json:"eligibleForCloudProxy"`
+		}{EligibleForCloudProxy: false},
+	}
+
+	// Additional capabilities
+	data.Capabilities.DeviceIdentity.Enabled = false
+	data.Capabilities.PhysicalAccess.Enabled = false
+	data.Capabilities.PrivateAccess.Enabled = false
+	data.Capabilities.DataPolicy.Enabled = datapolicy
+	data.Capabilities.ThreatDefence.Enabled = false
+	data.Capabilities.NetworkSecurity.Enabled = threatdefence
+	data.Capabilities.VulnerabilityManagement.Enabled = true
+	data.Capabilities.Wireguard.Enabled = false
+	data.Capabilities.Proxy.Enabled = false
+	data.Capabilities.Proxy.ControlledNetworkInterfaces = "CELLULAR_ONLY"
+	data.Capabilities.SecureDns.Enabled = false
+	data.Capabilities.SecureDns.Mandatory = true
+	data.Capabilities.OnDevice.Enabled = false
 
 	//management
 	data.Management.TimeZone = "America/Los_Angeles"
@@ -333,9 +488,9 @@ func makepayloadstructNR(activationprofilename string) DataNR {
 // Define the validation function
 func validateIdP(v interface{}, k string) (ws []string, errors []error) {
 	allowedStatuses := map[string]struct{}{
-		"OKTA":         {},
-		"NetworkRelay": {},
-		"None":         {},
+		"okta":         {},
+		"networkrelay": {},
+		"none":         {},
 	}
 
 	value, ok := v.(string)
@@ -343,9 +498,10 @@ func validateIdP(v interface{}, k string) (ws []string, errors []error) {
 		errors = append(errors, fmt.Errorf("%q must be a string", k))
 		return
 	}
-
-	if _, valid := allowedStatuses[value]; !valid {
-		errors = append(errors, fmt.Errorf("%q must be one of %v, got %q", k, []string{"OKTA", "NetworkRelay", "None"}, value))
+	// Convert the value to lowercase for case-insensitive comparison
+	lowercaseValue := strings.ToLower(value)
+	if _, valid := allowedStatuses[lowercaseValue]; !valid {
+		errors = append(errors, fmt.Errorf("%q must be one of %v, got %q", k, []string{"okta", "networkrelay", "none"}, value))
 	}
 
 	return
@@ -371,7 +527,7 @@ func ResourceActivationProfile() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validateIdP,
 				Default:      "None",
-				Description:  "Allowed values of 'OKTA', 'None, or 'NetworkRelay'. If NetworkRelay is selected, only Private Access will be enabled",
+				Description:  "Allowed values of 'Okta', 'None, or 'NetworkRelay'. If NetworkRelay is selected, only Private Access will be enabled",
 			},
 			"oktaconnectionid": {
 				Type:        schema.TypeString,
@@ -438,14 +594,21 @@ func ResourceActivationProfile() *schema.Resource {
 func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 	var payload []byte
 	var err error // Declare `err` outside of the `if` block
-	if d.Get("idptype").(string) == "OKTA" {
+	lowercaseValue := strings.ToLower(d.Get("idptype").(string))
+	if lowercaseValue == "okta" {
 		data := makepayloadstruct(d.Get("name").(string), d.Get("oktaconnectionid").(string), d.Get("privateaccess").(bool), d.Get("threatdefence").(bool), d.Get("datapolicy").(bool))
 		payload, err = json.Marshal(data)
 		if err != nil {
 			return fmt.Errorf("an error occurred: %s", "marshaling json")
 		}
-	} else {
+	} else if lowercaseValue == "networkrelay" {
 		data := makepayloadstructNR(d.Get("name").(string))
+		payload, err = json.Marshal(data)
+		if err != nil {
+			return fmt.Errorf("an error occurred: %s", "marshaling json")
+		}
+	} else { //none for idp
+		data := makepayloadstructnoidp(d.Get("name").(string), d.Get("threatdefence").(bool), d.Get("datapolicy").(bool))
 		payload, err = json.Marshal(data)
 		if err != nil {
 			return fmt.Errorf("an error occurred: %s", "marshaling json")
