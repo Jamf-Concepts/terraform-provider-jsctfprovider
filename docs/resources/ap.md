@@ -31,7 +31,7 @@ resource "jsc_ap" "myaptry" {
 ### Optional
 
 - `datapolicy` (Boolean)
-- `idptype` (String) Allowed values of 'OKTA', 'None, or 'NetworkRelay'. If NetworkRelay is selected, only Private Access will be enabled
+- `idptype` (String) Allowed values of 'Okta', 'None, or 'NetworkRelay'. If NetworkRelay is selected, only Private Access will be enabled
 - `oktaconnectionid` (String) Okta Connection ID. Required when idptype is set to OKTA
 - `privateaccess` (Boolean)
 - `threatdefence` (Boolean)
