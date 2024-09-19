@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"jsctfprovider/internal/auth"
 
@@ -333,8 +334,8 @@ func makepayloadstructNR(activationprofilename string) DataNR {
 // Define the validation function
 func validateIdP(v interface{}, k string) (ws []string, errors []error) {
 	allowedStatuses := map[string]struct{}{
-		"OKTA":         {},
-		"NetworkRelay": {},
+		"okta":         {},
+		"networkrelay": {},
 		"None":         {},
 	}
 
@@ -343,9 +344,10 @@ func validateIdP(v interface{}, k string) (ws []string, errors []error) {
 		errors = append(errors, fmt.Errorf("%q must be a string", k))
 		return
 	}
-
-	if _, valid := allowedStatuses[value]; !valid {
-		errors = append(errors, fmt.Errorf("%q must be one of %v, got %q", k, []string{"OKTA", "NetworkRelay", "None"}, value))
+	// Convert the value to lowercase for case-insensitive comparison
+	lowercaseValue := strings.ToLower(value)
+	if _, valid := allowedStatuses[lowercaseValue]; !valid {
+		errors = append(errors, fmt.Errorf("%q must be one of %v, got %q", k, []string{"okta", "networkrelay", "None"}, value))
 	}
 
 	return
