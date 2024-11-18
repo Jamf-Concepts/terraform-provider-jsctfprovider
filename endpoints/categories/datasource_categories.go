@@ -3,27 +3,28 @@ package categories
 import (
 	//"bytes"
 	//"encoding/json"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"encoding/json"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-    "context"
-    "github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"context"
 	"jsctfprovider/internal/auth"
-)
-//define type of route - don't use much but nice to keep for future use
-type Categories struct {
-    ID              string `json:"id"`
-    Name         	string `json:"name"`
-	DisplayName	    string `json:"displayName"`
-    } 
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+// define type of route - don't use much but nice to keep for future use
+type Categories struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+}
 
 func DataSourceCategories() *schema.Resource {
-    return &schema.Resource{
+	return &schema.Resource{
 		ReadContext: dataSourceCategoriesRead,
 
 		Schema: map[string]*schema.Schema{
@@ -37,7 +38,7 @@ func DataSourceCategories() *schema.Resource {
 				Computed:    true,
 				Description: "The unique identifier of the category",
 			},
-            "displayname": {
+			"displayname": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The route display name of the category",
@@ -48,9 +49,8 @@ func DataSourceCategories() *schema.Resource {
 
 // Define the read function for routes
 func dataSourceCategoriesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-    //routeName := d.Get("name").(string)
+	//routeName := d.Get("name").(string)
 
-    
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/content-block-service/v1/customers/{customerid}/categories"), nil)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error converting making http request body"))
@@ -64,7 +64,7 @@ func dataSourceCategoriesRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
-		return diag.FromErr(fmt.Errorf("failed to read routes info: %s", resp.Status))
+		return diag.FromErr(fmt.Errorf("failed to read category info: %s", resp.Status))
 	}
 
 	// Read the response body
@@ -78,26 +78,21 @@ func dataSourceCategoriesRead(ctx context.Context, d *schema.ResourceData, meta 
 	fmt.Println(string(body))
 	// Parse the response JSON
 
-
-	
 	var response []Categories
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-		// Find id from the first instance where name contains "the provided name"
+	// Find id from the first instance where name contains "the provided name"
 
-		for _, category := range response {
-			if strings.EqualFold(category.DisplayName, d.Get("displayname").(string)) {
-				d.Set("name", category.Name)
-				d.SetId(category.ID) //need to set something for resource to exist
-				break
-			}
+	for _, category := range response {
+		if strings.EqualFold(category.DisplayName, d.Get("displayname").(string)) {
+			d.Set("name", category.Name)
+			d.SetId(category.ID) //need to set something for resource to exist
+			break
 		}
+	}
 
-	
-
-
-    return nil
+	return nil
 }

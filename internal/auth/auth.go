@@ -10,12 +10,18 @@ import (
 	"strings"
 )
 
-// Function to authenticate against the API
 var xsrfToken string
 var sessionCookie string
 var holdCustomerid string
+var providerDomainName string
 
-func Authenticate(DomainName string, Username string, Password string, Customerid string) error {
+func StoreRadarAuthVars(DomainName string) error {
+	providerDomainName = DomainName
+
+	return nil
+}
+
+func AuthenticateRadarAPI(DomainName string, Username string, Password string, Customerid string) error {
 
 	// Make a GET request to obtain cookies
 	resp, err := http.Get(fmt.Sprintf("https://%s/auth/v1/login-methods?email=%s", DomainName, Username))
@@ -154,7 +160,7 @@ func findCustomerid(DomainName string) {
 	if result["admin"].(map[string]interface{})["entityType"].(string) == "CUSTOMER" {
 		// Extract entityId
 		entityId := result["admin"].(map[string]interface{})["entityId"].(string)
-		fmt.Println("CusomterID:", entityId)
+		fmt.Println("Customer:", entityId)
 		holdCustomerid = entityId
 	} else {
 		urlCheckParent := (fmt.Sprintf("https://%s/gate/user-service/customer/v2/customers/visible-for-admin", DomainName))
@@ -221,7 +227,7 @@ func findCustomerid(DomainName string) {
 
 }
 func MakeRequest(req *http.Request) (*http.Response, error) {
-	// Create a new HTTP client
+
 	client := &http.Client{}
 	log.Println("[INFO] Building the client")
 	log.Println("[INFO] incoming url is " + req.URL.Path)
@@ -229,8 +235,10 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 
 	log.Println("new url query is " + req.URL.RawQuery)
 	req.URL.Path = strings.Replace(req.URL.Path, "{customerid}", holdCustomerid, -1)
+	req.Host = providerDomainName     //swap out domain if something specific is provided
+	req.URL.Host = providerDomainName //in both the path AND the host field
 	log.Println("new raw url is " + req.URL.Path)
-	log.Println("raw host is " + string(req.URL.Host))
+	log.Println("raw host is " + string(req.Host))
 
 	log.Println("session cookie  is " + sessionCookie)
 

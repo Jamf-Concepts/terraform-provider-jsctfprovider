@@ -38,11 +38,6 @@ var (
 
 func main() {
 
-	// Perform authentication later
-	//err := authenticate()
-	//if err != nil {
-	//	panic(fmt.Sprintf("failed to authenticate: %v", err))
-	//} do not auth here - we need to get credentials first
 	log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
 
 	// Create a new plugin with a specific provider
@@ -102,13 +97,21 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	// Read the domain_name field from the configuration and assign it to domainName
 	DomainName = d.Get("domain_name").(string)
 
+	errStore := auth.StoreRadarAuthVars(DomainName)
+	if errStore != nil {
+		return nil, errStore
+	}
+
 	// Assign username and password from configuration
 	Username = d.Get("username").(string)
 	Password = d.Get("password").(string)
 	Customerid = d.Get("customerid").(string)
-	err := auth.Authenticate(DomainName, Username, Password, Customerid)
-	if err != nil {
-		return nil, err
+
+	if Username != "" { //prep work for other auth methods
+		err := auth.AuthenticateRadarAPI(DomainName, Username, Password, Customerid)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, nil
