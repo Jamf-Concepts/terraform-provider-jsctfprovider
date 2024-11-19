@@ -8,7 +8,9 @@ import (
 	"jsctfprovider/endpoints/groups"
 	"jsctfprovider/endpoints/hostnamemapping"
 	"jsctfprovider/endpoints/idp"
+	pagapptemplates "jsctfprovider/endpoints/pag_apptemplates"
 	pagvpnroutes "jsctfprovider/endpoints/pag_vpnroutes"
+	pagztnaapp "jsctfprovider/endpoints/pag_ztna_app"
 	"jsctfprovider/endpoints/routes"
 	"jsctfprovider/endpoints/uemc"
 	"jsctfprovider/endpoints/ztna"
@@ -94,11 +96,13 @@ func main() {
 				},
 				// Define the datasources
 				DataSourcesMap: map[string]*schema.Resource{
-					"jsc_routes":          routes.DataSourceRoutes(),
-					"jsc_pag_vpnroutes":   pagvpnroutes.DataSourcePAGVPNRoutes(),
-					"jsc_categories":      categories.DataSourceCategories(),
-					"jsc_groups":          groups.DataSourceGroups(),
-					"jsc_hostnamemapping": hostnamemapping.DataSourceHostnameMapping(),
+					"jsc_routes":           routes.DataSourceRoutes(),
+					"jsc_pag_vpnroutes":    pagvpnroutes.DataSourcePAGVPNRoutes(),
+					"jsc_pag_apptemplates": pagapptemplates.DataSourcePAGAppTemplates(),
+					"jsc_pag_ztnaapp":      pagztnaapp.DataSourcePAGZTNAApp(),
+					"jsc_categories":       categories.DataSourceCategories(),
+					"jsc_groups":           groups.DataSourceGroups(),
+					"jsc_hostnamemapping":  hostnamemapping.DataSourceHostnameMapping(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
