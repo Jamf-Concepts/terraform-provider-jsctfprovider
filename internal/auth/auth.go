@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,8 +13,62 @@ import (
 
 var xsrfToken string
 var sessionCookie string
+var pagjwt string
 var holdCustomerid string
 var providerDomainName string
+
+func AuthenticatePAG(Applicationid string, Applicationsecret string) error {
+
+	// Struct to hold the response data
+	type ApiResponse struct {
+		Token string `json:"token"`
+	}
+
+	const apidomain = "api.wandera.com"
+
+	// Create the Basic Authentication string
+	auth := Applicationid + ":" + Applicationsecret
+	encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
+
+	// Create the request with the Basic Authentication header
+	req, err := http.NewRequest("POST", fmt.Sprintf("https://%s/v1/login", apidomain), nil)
+	if err != nil {
+		return err
+	}
+
+	// Add the Authorization header
+	req.Header.Add("Authorization", "Basic "+encodedAuth)
+
+	// Make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Handle the response
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to login, status: %s", resp.Status)
+	}
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	// Parse the JSON response
+	var apiResponse ApiResponse
+	err = json.Unmarshal(body, &apiResponse)
+	if err != nil {
+		return fmt.Errorf("failed to parse response: %v", err)
+	}
+
+	// Return the token
+	println(apiResponse.Token)
+	pagjwt = apiResponse.Token
+
+	return nil
+}
 
 func StoreRadarAuthVars(DomainName string) error {
 	providerDomainName = DomainName
@@ -227,7 +282,9 @@ func findCustomerid(DomainName string) {
 
 }
 func MakeRequest(req *http.Request) (*http.Response, error) {
-
+	if sessionCookie == "" {
+		return nil, fmt.Errorf("RADAR API not authenticated")
+	}
 	client := &http.Client{}
 	log.Println("[INFO] Building the client")
 	log.Println("[INFO] incoming url is " + req.URL.Path)
@@ -256,4 +313,26 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 
 	return resp2, nil
 
+}
+
+func MakePAGRequest(req *http.Request) (*http.Response, error) {
+	if pagjwt == "" {
+		return nil, fmt.Errorf("PAG JWT API not authenticated")
+	}
+	client := &http.Client{}
+	log.Println("[INFO] Building the PAG client")
+	log.Println("[INFO] incoming url is " + req.URL.Path)
+	// Send the request using the client
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	// Add Bearer Token for authentication
+	req.Header.Set("Authorization", "Bearer "+pagjwt)
+
+	resp2, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	//defer resp2.Body.Close()
+
+	return resp2, nil
 }

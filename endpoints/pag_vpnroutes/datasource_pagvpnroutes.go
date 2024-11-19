@@ -1,4 +1,4 @@
-package groups
+package pagvpnroutes
 
 import (
 	//"bytes"
@@ -16,46 +16,45 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// define type of route - don't use much but nice to keep for future use
-type Groups struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Devices int64  `json:"devices"`
+type ResponseItem struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Shared      bool     `json:"shared"`
+	CustomerIDs []string `json:"customerIds"`
 }
 
-func DataSourceGroups() *schema.Resource {
+func DataSourcePAGVPNRoutes() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceGroupsRead,
+		ReadContext: dataSourcePAGVPNRoutesRead,
 
 		Schema: map[string]*schema.Schema{
-			"devices": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The number of devices in group",
+			"name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The name of the route",
 			},
 			"id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The unique identifier of the group (from JSC)",
+				Description: "The unique identifier of the route datasource set from JSC",
 			},
-			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The display name of the group in JSC",
+			"shared": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "If the route is shared or not",
 			},
 		},
 	}
 }
 
 // Define the read function for routes
-func dataSourceGroupsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	//routeName := d.Get("name").(string)
+func dataSourcePAGVPNRoutesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/api/groups"), nil)
+	req, err := http.NewRequest("GET", ("https://api.wandera.com/ztna/v1/vpn-routes"), nil)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error converting making http request body"))
 	}
-	resp, err := auth.MakeRequest((req))
+	resp, err := auth.MakePAGRequest((req))
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -78,7 +77,7 @@ func dataSourceGroupsRead(ctx context.Context, d *schema.ResourceData, meta inte
 	fmt.Println(string(body))
 	// Parse the response JSON
 
-	var response []Groups
+	var response []ResponseItem
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return diag.FromErr(err)
@@ -86,11 +85,11 @@ func dataSourceGroupsRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 	// Find id from the first instance where name contains "the provided name"
 
-	for _, groups := range response {
-		if strings.EqualFold(groups.Name, d.Get("name").(string)) {
-			d.Set("name", groups.Name)
-			d.SetId(groups.ID)
-			d.Set("devices", groups.Devices)
+	for _, ip := range response {
+		if strings.Contains(ip.Name, d.Get("name").(string)) {
+			d.SetId(ip.ID)
+			d.Set("shared", ip.Shared)
+			d.Set("name", ip.Name)
 			break
 		}
 	}

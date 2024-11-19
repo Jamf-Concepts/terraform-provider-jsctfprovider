@@ -8,6 +8,7 @@ import (
 	"jsctfprovider/endpoints/groups"
 	"jsctfprovider/endpoints/hostnamemapping"
 	"jsctfprovider/endpoints/idp"
+	pagvpnroutes "jsctfprovider/endpoints/pag_vpnroutes"
 	"jsctfprovider/endpoints/routes"
 	"jsctfprovider/endpoints/uemc"
 	"jsctfprovider/endpoints/ztna"
@@ -30,10 +31,12 @@ import (
 //go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name jsc
 
 var (
-	DomainName string
-	Username   string
-	Password   string
-	Customerid string
+	DomainName        string
+	Username          string
+	Password          string
+	Customerid        string
+	Applicationid     string
+	Applicationsecret string
 )
 
 func main() {
@@ -53,12 +56,12 @@ func main() {
 					},
 					"username": {
 						Type:        schema.TypeString,
-						Required:    true,
+						Optional:    true,
 						Description: "The JSC username used for authentication. Must be local account - SSO or SAML not supported.",
 					},
 					"password": {
 						Type:        schema.TypeString,
-						Required:    true,
+						Optional:    true,
 						Sensitive:   true,
 						Description: "The JSC password used for authentication.",
 					},
@@ -67,6 +70,17 @@ func main() {
 						Optional:    true,
 						Default:     "empty",
 						Description: "The optional customerID. If not provided, the provider will attempt to discover.",
+					},
+					"applicationid": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "The optional applicationid. Required for PAG resource types.",
+					},
+					"applicationsecret": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Sensitive:   true,
+						Description: "The optional applicationsecret. Required for PAG resource types.",
 					},
 				},
 				// Define the resources that this provider manages
@@ -81,6 +95,7 @@ func main() {
 				// Define the datasources
 				DataSourcesMap: map[string]*schema.Resource{
 					"jsc_routes":          routes.DataSourceRoutes(),
+					"jsc_pag_vpnroutes":   pagvpnroutes.DataSourcePAGVPNRoutes(),
 					"jsc_categories":      categories.DataSourceCategories(),
 					"jsc_groups":          groups.DataSourceGroups(),
 					"jsc_hostnamemapping": hostnamemapping.DataSourceHostnameMapping(),
@@ -106,9 +121,17 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	Username = d.Get("username").(string)
 	Password = d.Get("password").(string)
 	Customerid = d.Get("customerid").(string)
+	Applicationid = d.Get("applicationid").(string)
+	Applicationsecret = d.Get("applicationsecret").(string)
 
 	if Username != "" { //prep work for other auth methods
 		err := auth.AuthenticateRadarAPI(DomainName, Username, Password, Customerid)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if Applicationid != "" { //do we have the PAG auth model?
+		err := auth.AuthenticatePAG(Applicationid, Applicationsecret)
 		if err != nil {
 			return nil, err
 		}
