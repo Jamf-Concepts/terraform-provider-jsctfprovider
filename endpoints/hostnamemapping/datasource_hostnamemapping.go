@@ -88,7 +88,7 @@ func dataSourceMappingsRead(ctx context.Context, d *schema.ResourceData, meta in
 	resp, err := auth.MakeRequest((req))
 
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error making http request"))
+		return diag.FromErr(err)
 	}
 	defer resp.Body.Close()
 

@@ -7,8 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"jsctfprovider/internal/auth"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // Define the schema for the UEMC resource
@@ -22,18 +23,18 @@ func ResourceUEMC() *schema.Resource {
 		// Define the attributes of the okta resource
 		Schema: map[string]*schema.Schema{
 			"domain": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "Full domain path of Jamf Pro instance.",
 			},
 			"clientsecret": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "Client Secret of Jamf Pro API Integration.",
 			},
 			"clientid": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "Client ID of Jamf Pro API Integration.",
 			},
 			// Add more attributes as needed
@@ -43,8 +44,6 @@ func ResourceUEMC() *schema.Resource {
 
 // Define the create function for the UEMC resource
 func resourceUEMCCreate(d *schema.ResourceData, m interface{}) error {
-
-
 
 	// Construct the request body
 	vm := map[string]interface{}{
@@ -117,8 +116,6 @@ func resourceUEMCCreate(d *schema.ResourceData, m interface{}) error {
 func resourceUEMCRead(d *schema.ResourceData, m interface{}) error {
 	// Make a GET request to read the details of an existing Okta IDP
 
-
-
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/sync-state/{customerid}"), nil)
 	if err != nil {
 		return err
@@ -155,15 +152,12 @@ func resourceUEMCUpdate(d *schema.ResourceData, m interface{}) error {
 	resourceUEMCDelete(d, m)
 	resourceUEMCCreate(d, m)
 
-
 	return nil
 }
 
 // Define the delete function for the Okta resource
 func resourceUEMCDelete(d *schema.ResourceData, m interface{}) error {
 	// Make a DELETE request to delete an existing Okta
-
-
 
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/config/{customerid}"), nil)
 	if err != nil {

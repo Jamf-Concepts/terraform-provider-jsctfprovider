@@ -7,8 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"jsctfprovider/internal/auth"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // Define the schema for the blockpage resource - only datablock rn
@@ -22,25 +23,25 @@ func Resourceztna() *schema.Resource {
 		// Define the attributes of the okta resource
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "Friendly name of ZTNA Access Policy.",
 			},
 			"type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default: "ENTERPRISE",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "ENTERPRISE",
 				Description: "Type of ZTNA Access Policy. ENTERPRISE or SAAS.",
 			},
 			"routeid": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "The routeid required for egress. Can be obtained from jsc_routes datasource.",
 			},
 			"hostnames": {
-				Type:     schema.TypeList,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Required: true,
+				Type:        schema.TypeList,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Required:    true,
 				Description: "Hostnames that this ZTNA Access Policy will capture.",
 			},
 			// Add more attributes as needed
@@ -51,7 +52,6 @@ func Resourceztna() *schema.Resource {
 // Define the create function for the UEMC resource
 func resourceztnaCreate(d *schema.ResourceData, m interface{}) error {
 
-
 	hostnames := d.Get("hostnames").([]interface{})
 	// Convert hostnames from []interface{} to []string
 	var hostnamesStrings []string
@@ -60,39 +60,38 @@ func resourceztnaCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	app := map[string]interface{}{
-			"type":         d.Get("type").(string),
-			"name":         d.Get("name").(string),
-			"categoryName": "Uncategorized",
-			"hostnames":    hostnamesStrings,
-			"bareIps":      []string{},
-			"routing": map[string]interface{}{
-				"type":                "CUSTOM",
-				"routeId":             d.Get("routeid").(string),
-				"dnsIpResolutionType": "IPv6",
+		"type":         d.Get("type").(string),
+		"name":         d.Get("name").(string),
+		"categoryName": "Uncategorized",
+		"hostnames":    hostnamesStrings,
+		"bareIps":      []string{},
+		"routing": map[string]interface{}{
+			"type":                "CUSTOM",
+			"routeId":             d.Get("routeid").(string),
+			"dnsIpResolutionType": "IPv6",
+		},
+		"assignments": map[string]interface{}{
+			"inclusions": map[string]interface{}{
+				"allUsers": true,
+				"groups":   []interface{}{},
 			},
-			"assignments": map[string]interface{}{
-				"inclusions": map[string]interface{}{
-					"allUsers": true,
-					"groups":   []interface{}{},
-				},
+		},
+		"security": map[string]interface{}{
+			"riskControls": map[string]interface{}{
+				"enabled":              false,
+				"levelThreshold":       "HIGH",
+				"notificationsEnabled": true,
 			},
-			"security": map[string]interface{}{
-				"riskControls": map[string]interface{}{
-					"enabled":               false,
-					"levelThreshold":        "HIGH",
-					"notificationsEnabled": true,
-				},
-				"dohIntegration": map[string]interface{}{
-					"blocking":             false,
-					"notificationsEnabled": true,
-				},
-				"deviceManagementBasedAccess": map[string]interface{}{
-					"enabled":               false,
-					"notificationsEnabled": true,
-				},
+			"dohIntegration": map[string]interface{}{
+				"blocking":             false,
+				"notificationsEnabled": true,
 			},
-		}
-	
+			"deviceManagementBasedAccess": map[string]interface{}{
+				"enabled":              false,
+				"notificationsEnabled": true,
+			},
+		},
+	}
 
 	payload, err := json.Marshal(app)
 	if err != nil {
@@ -136,16 +135,14 @@ func resourceztnaCreate(d *schema.ResourceData, m interface{}) error {
 	d.SetId(response.ID)
 	d.Set("appname", d.Get("name").(string))
 
-
-
 	return nil
 }
 
 // Define the read function for the ZTNA resource
 func resourceztnaRead(d *schema.ResourceData, m interface{}) error {
 	// Make a GET request to read the details of an existing ZTNA app
-	
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/api/app-definitions/%s?appName=&", d.Id() ), nil)
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/api/app-definitions/%s?appName=&", d.Id()), nil)
 	if err != nil {
 		return err
 	}
@@ -183,7 +180,7 @@ func resourceztnaUpdate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-// Define the delete function for the ZTNA page 
+// Define the delete function for the ZTNA page
 func resourceztnaDelete(d *schema.ResourceData, m interface{}) error {
 	// Retrieve the value of the "name" attribute from the resource configuration
 
