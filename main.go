@@ -93,6 +93,7 @@ func main() {
 					"jsc_ztna":            ztna.Resourceztna(),
 					"jsc_ap":              activationprofiles.ResourceActivationProfile(),
 					"jsc_hostnamemapping": hostnamemapping.ResourceHostnameMapping(),
+					"jsc_pag_ztnaapp":     pagztnaapp.ResourcePAGZTNAApp(),
 				},
 				// Define the datasources
 				DataSourcesMap: map[string]*schema.Resource{
