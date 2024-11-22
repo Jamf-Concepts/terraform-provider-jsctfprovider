@@ -152,7 +152,7 @@ func ResourcePAGZTNAApp() *schema.Resource {
 	}
 }
 
-// Define the create function for the mapping resource
+// Define the create function for the ztna resource
 func resourcePAGZTNAAppCreate(d *schema.ResourceData, m interface{}) error {
 
 	hostnamesInterface := d.Get("hostnames").([]interface{}) // Get the raw slice of interfaces
@@ -268,7 +268,7 @@ func resourcePAGZTNAAppCreate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-// Define the read function for the ztna mapping
+// Define the read function for the ztna resource
 func resourcePAGZTNAAppRead(d *schema.ResourceData, m interface{}) error {
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.wandera.com/ztna/v1/apps/%s", d.Id()), nil)
@@ -328,7 +328,7 @@ func resourcePAGZTNAAppUpdate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-// Define the delete function for the hostname resource
+// Define the delete function for the ztna resource
 func resourcePAGZTNAAppDelete(d *schema.ResourceData, m interface{}) error {
 
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://api.wandera.com/ztna/v1/apps/%s", d.Id()), nil)
