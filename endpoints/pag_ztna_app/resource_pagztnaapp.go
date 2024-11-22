@@ -70,7 +70,7 @@ func ResourcePAGZTNAApp() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "Uncategorized",
-				Description: "Category Name",
+				Description: "Category Name - supported types are Adult, Advertising, App Counters, App Stores, Audio & Music, Browsers, Business & Industry, Cloud & File Storage, Communication, Content Servers, Custom, Entertainment, Extreme, Finance, Gambling, Games, Generative AI, Illegal, Lifestyle, Medical, Navigation, News & Sport, OS Updates, Productivity, Reference, Shopping, Social, Technology, Travel, Uncategorized, Video & Photo",
 			},
 			"apptemplateid": {
 				Type:        schema.TypeString,

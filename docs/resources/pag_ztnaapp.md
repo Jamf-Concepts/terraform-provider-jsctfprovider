@@ -37,7 +37,7 @@ resource "jsc_pag_ztnaapp" "testztnaapp" {
 - `assignmentallusers` (Boolean) Assign ZTNA App to all users
 - `assignmentgroups` (List of String) Groups to assign ZTNA App Policy to
 - `bareips` (List of String) List of bare ips
-- `categoryname` (String) Category Name
+- `categoryname` (String) Category Name - supported types are Adult, Advertising, App Counters, App Stores, Audio & Music, Browsers, Business & Industry, Cloud & File Storage, Communication, Content Servers, Custom, Entertainment, Extreme, Finance, Gambling, Games, Generative AI, Illegal, Lifestyle, Medical, Navigation, News & Sport, OS Updates, Productivity, Reference, Shopping, Social, Technology, Travel, Uncategorized, Video & Photo
 - `hostnames` (List of String) List of hostnames
 - `routingdnstype` (String) Routing IP DNS Resolution Type - IPv4 or IPv6 (default is IPv6)
 - `routingid` (String) Routing ID - required when routingtype is CUSTOM
