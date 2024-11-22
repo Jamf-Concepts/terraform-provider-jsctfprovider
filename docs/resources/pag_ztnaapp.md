@@ -29,18 +29,18 @@ resource "jsc_pag_ztnaapp" "testztnaapp" {
 
 ### Required
 
-- `name` (String) The name of the ZTNA App
+- `name` (String) The name of the ZTNA App. Must be unique
 
 ### Optional
 
 - `apptemplateid` (String) App Template ID (if applicable)
 - `assignmentallusers` (Boolean) Assign ZTNA App to all users
-- `assignmentgroups` (List of String) Groups to assign ZTNA App Policy to
-- `bareips` (List of String) List of bare ips
+- `assignmentgroups` (List of String) Group IDs to assign ZTNA App Policy
+- `bareips` (List of String) List of bare ips - IPv4 only CIDR notation
 - `categoryname` (String) Category Name - supported types are Adult, Advertising, App Counters, App Stores, Audio & Music, Browsers, Business & Industry, Cloud & File Storage, Communication, Content Servers, Custom, Entertainment, Extreme, Finance, Gambling, Games, Generative AI, Illegal, Lifestyle, Medical, Navigation, News & Sport, OS Updates, Productivity, Reference, Shopping, Social, Technology, Travel, Uncategorized, Video & Photo
-- `hostnames` (List of String) List of hostnames
+- `hostnames` (List of String) List of hostnames. Must be unique across all Access Policies and App Templates
 - `routingdnstype` (String) Routing IP DNS Resolution Type - IPv4 or IPv6 (default is IPv6)
-- `routingid` (String) Routing ID - required when routingtype is CUSTOM
+- `routingid` (String) Routing ID - required when routingtype is CUSTOM. Otherwise must be omitted
 - `routingtype` (String) Routing Type - DIRECT or CUSTOM
 - `securitydevicemanagementbasedaccessenabled` (Boolean) Enable deviceManagementBasedAccess for ZTNA App Policy
 - `securitydevicemanagementbasedaccessnotifications` (Boolean) Enable deviceManagementBasedAccess notifications for ZTNA App Policy

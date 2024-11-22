@@ -47,7 +47,7 @@ func ResourcePAGZTNAApp() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name of the ZTNA App",
+				Description: "The name of the ZTNA App. Must be unique",
 			},
 			"id": {
 				Type:        schema.TypeString,
@@ -58,13 +58,13 @@ func ResourcePAGZTNAApp() *schema.Resource {
 				Type:        schema.TypeList,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Optional:    true,
-				Description: "List of hostnames",
+				Description: "List of hostnames. Must be unique across all Access Policies and App Templates",
 			},
 			"bareips": {
 				Type:        schema.TypeList,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Optional:    true,
-				Description: "List of bare ips",
+				Description: "List of bare ips - IPv4 only CIDR notation",
 			},
 			"categoryname": {
 				Type:        schema.TypeString,
@@ -86,7 +86,7 @@ func ResourcePAGZTNAApp() *schema.Resource {
 			"routingid": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Routing ID - required when routingtype is CUSTOM",
+				Description: "Routing ID - required when routingtype is CUSTOM. Otherwise must be omitted",
 			},
 			"routingdnstype": {
 				Type:        schema.TypeString,
@@ -146,7 +146,7 @@ func ResourcePAGZTNAApp() *schema.Resource {
 				Type:        schema.TypeList,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Optional:    true,
-				Description: "Groups to assign ZTNA App Policy to",
+				Description: "Group IDs to assign ZTNA App Policy",
 			},
 		},
 	}
