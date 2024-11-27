@@ -31,7 +31,7 @@ type ResponseItemZTNAApp struct {
 	Routing       Routing     `json:"routing"`
 	Security      Security    `json:"security"`
 	AppTemplateId string      `json:"appTemplateId"`
-	ID            string      `json:"id"`
+	ID            string      `json:"id,omitempty"`
 }
 
 // Define the schema for the ZTNA resource
@@ -208,12 +208,12 @@ func resourcePAGZTNAAppCreate(d *schema.ResourceData, m interface{}) error {
 				NotificationsEnabled: d.Get("securityriskcontrolnotifications").(bool),
 			},
 			DohIntegration: DohIntegration{
-				Blocking:             false,
-				NotificationsEnabled: true,
+				Blocking:             d.Get("securitydohintegrationblocking").(bool),
+				NotificationsEnabled: d.Get("securitydohintegrationnotifications").(bool),
 			},
 			DeviceManagementBasedAccess: DeviceManagementBasedAccess{
-				Enabled:              false,
-				NotificationsEnabled: true,
+				Enabled:              d.Get("securitydevicemanagementbasedaccessenabled").(bool),
+				NotificationsEnabled: d.Get("securitydevicemanagementbasedaccessnotifications").(bool),
 			},
 		},
 		AppTemplateId: d.Get("apptemplateid").(string),
