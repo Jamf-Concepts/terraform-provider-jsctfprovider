@@ -29,8 +29,8 @@ type Assignments struct {
 
 type Routing struct {
 	Type                string `json:"type"`
-	RouteId             string `json:"routeId"`
-	DnsIpResolutionType string `json:"dnsIpResolutionType"`
+	RouteId             string `json:"routeId,omitempty"`
+	DnsIpResolutionType string `json:"dnsIpResolutionType,omitempty"`
 }
 
 type RiskControls struct {
@@ -59,7 +59,7 @@ type GroupOverrides struct {
 	RoutingOverrides []interface{} `json:"routingOverrides"`
 }
 
-type ResponseItemZTNAApp struct {
+type ResponseItemZTNAApps struct {
 	Name           string         `json:"name"`
 	CategoryName   string         `json:"categoryName"`
 	Hostnames      []string       `json:"hostnames"`
@@ -124,11 +124,57 @@ func DataSourcePAGZTNAApp() *schema.Resource {
 				Computed:    true,
 				Description: "Routing IP DNS Resolution Type",
 			},
+			"securityriskcontrolenabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enable device risk security controls for ZTNA App policy",
+			},
+			"securityriskcontrolthreshold": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Risk level threshold (when enabled), options of HIGH, MEDIUM, LOW",
+			},
+			"securityriskcontrolnotifications": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enable notificatons for device risk security controls",
+			},
+			"securitydohintegrationblocking": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enable DoH blocking for ZTNA App Policy",
+			},
+			"securitydohintegrationnotifications": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enable DoH notifications for ZTNA App Policy",
+			},
+			"securitydevicemanagementbasedaccessenabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enable deviceManagementBasedAccess for ZTNA App Policy",
+			},
+			"securitydevicemanagementbasedaccessnotifications": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enable deviceManagementBasedAccess notifications for ZTNA App Policy",
+			},
+			"assignmentallusers": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Assign ZTNA App to all users",
+			},
+			"assignmentgroups": {
+				Type:        schema.TypeList,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Computed:    true,
+				Description: "Groups to assign ZTNA App Policy to",
+			},
 		},
 	}
 }
 
-// Define the read function for routes
+// Define the read function for ZTNA App
 func dataSourcePAGZTNAAppRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	req, err := http.NewRequest("GET", ("https://api.wandera.com/ztna/v1/apps"), nil)
@@ -158,7 +204,7 @@ func dataSourcePAGZTNAAppRead(ctx context.Context, d *schema.ResourceData, meta 
 	fmt.Println(string(body))
 	// Parse the response JSON
 
-	var response []ResponseItemZTNAApp
+	var response []ResponseItemZTNAApps
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return diag.FromErr(err)
@@ -177,6 +223,15 @@ func dataSourcePAGZTNAAppRead(ctx context.Context, d *schema.ResourceData, meta 
 			d.Set("routingtype", ip.Routing.Type)
 			d.Set("routingid", ip.Routing.RouteId)
 			d.Set("routingdnstype", ip.Routing.DnsIpResolutionType)
+			d.Set("securityriskcontrolenabled", ip.Security.RiskControls.Enabled)
+			d.Set("securityriskcontrolthreshold", ip.Security.RiskControls.LevelThreshold)
+			d.Set("securityriskcontrolnotifications", ip.Security.RiskControls.NotificationsEnabled)
+			d.Set("securitydohintegrationblocking", ip.Security.DohIntegration.Blocking)
+			d.Set("securitydohintegrationnotifications", ip.Security.DohIntegration.NotificationsEnabled)
+			d.Set("securitydevicemanagementbasedaccessenabled", ip.Security.DeviceManagementBasedAccess.Enabled)
+			d.Set("securitydevicemanagementbasedaccessnotifications", ip.Security.DeviceManagementBasedAccess.NotificationsEnabled)
+			d.Set("assignmentallusers", ip.Assignments.Inclusions.AllUsers)
+			d.Set("assignmentgroups", ip.Assignments.Inclusions.Groups)
 			break
 		}
 	}
