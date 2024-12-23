@@ -44,4 +44,7 @@ provider "jsc" {
 - `customerid` (String) The optional customerID. If not provided, the provider will attempt to discover.
 - `domain_name` (String) The JSC domain.
 - `password` (String, Sensitive) The JSC password used for authentication.
+- `protectclientid` (String) The Protect clientID created for authentication.
+- `protectclientpassword` (String, Sensitive) The Protect client password (sic) used for authentication.
+- `protectdomainname` (String) Your Jamf Protect endpoint is your Jamf Protect tenant
 - `username` (String) The JSC username used for authentication. Must be local account - SSO or SAML not supported.

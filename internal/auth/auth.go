@@ -11,11 +11,66 @@ import (
 	"strings"
 )
 
+type ProtectTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
+	TokenType   string `json:"token_type"`
+}
+
 var xsrfToken string
 var sessionCookie string
 var pagjwt string
 var holdCustomerid string
 var providerDomainName string
+
+var protectAuthToken string
+var protectDomainname string
+
+func AuthenticateProtect(domainname string, clientid string, clientpassword string) error {
+
+	authpayload := "{\"client_id\": \"" + clientid + "\", \"password\": \"" + clientpassword + "\"}"
+	fmt.Println("Payload for auth  creating request:", authpayload)
+	url := fmt.Sprintf("https://%s/token", domainname)
+
+	req, err := http.NewRequest("POST", url, strings.NewReader(authpayload))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	// Create an HTTP client and perform the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending request:", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Read and print the response
+	fmt.Println("Response status:", resp.Status)
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return err
+	}
+	//fmt.Println("Response body:", string(body))
+
+	// Create a variable to store the unmarshalled data
+	var tokenResp ProtectTokenResponse
+
+	errJson := json.Unmarshal(body, &tokenResp)
+	if errJson != nil {
+		log.Fatalf("Error unmarshalling JSON: %v", err)
+	}
+
+	fmt.Println("Access Token:", tokenResp.AccessToken)
+
+	protectAuthToken = tokenResp.AccessToken
+	protectDomainname = domainname
+	return nil
+}
 
 func AuthenticatePAG(Applicationid string, Applicationsecret string) error {
 
@@ -283,7 +338,7 @@ func findCustomerid(DomainName string) {
 }
 func MakeRequest(req *http.Request) (*http.Response, error) {
 	if sessionCookie == "" {
-		return nil, fmt.Errorf("RADAR API not authenticated")
+		return nil, fmt.Errorf("error RADAR API not authenticated")
 	}
 	client := &http.Client{}
 	log.Println("[INFO] Building the client")
@@ -317,7 +372,7 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 
 func MakePAGRequest(req *http.Request) (*http.Response, error) {
 	if pagjwt == "" {
-		return nil, fmt.Errorf("PAG JWT API not authenticated")
+		return nil, fmt.Errorf("error PAG JWT API not authenticated")
 	}
 	client := &http.Client{}
 	log.Println("[INFO] Building the PAG client")
@@ -328,6 +383,26 @@ func MakePAGRequest(req *http.Request) (*http.Response, error) {
 	// Add Bearer Token for authentication
 	req.Header.Set("Authorization", "Bearer "+pagjwt)
 
+	resp2, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	//defer resp2.Body.Close()
+
+	return resp2, nil
+}
+
+func MakeProtectRequest(req *http.Request) (*http.Response, error) {
+	if protectAuthToken == "" {
+		return nil, fmt.Errorf("error Protect API not authenticated")
+	}
+	client := &http.Client{}
+	req.Header.Set("Content-Type", "application/json")
+	// Add Bearer Token for authentication
+	req.Header.Set("Authorization", protectAuthToken)
+	req.Host = protectDomainname     //swap out domain if something specific is provided
+	req.URL.Host = protectDomainname //in both the path AND the host field
+	fmt.Print(req)
 	resp2, err := client.Do(req)
 	if err != nil {
 		return nil, err
