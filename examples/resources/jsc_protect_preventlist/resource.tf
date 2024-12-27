@@ -1,4 +1,4 @@
-resource "jamfprotect_preventlist" "made001" {
+resource "jsc_protect_preventlist" "made001" {
   name        = "testtfnew"
   description = "test"
   type        = "CDHASH"
