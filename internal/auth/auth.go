@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type ProtectTokenResponse struct {
@@ -340,7 +343,10 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 	if sessionCookie == "" {
 		return nil, fmt.Errorf("error RADAR API not authenticated")
 	}
-	client := &http.Client{}
+	client := &http.Client{Timeout: 240 * time.Second}
+
+	maxRetries := 3
+	retryDelay := 2 * time.Second
 	log.Println("[INFO] Building the client")
 	log.Println("[INFO] incoming url is " + req.URL.Path)
 	req.URL.RawQuery += "customerId=" + holdCustomerid
@@ -360,9 +366,33 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 	req.Header.Set("X-Xsrf-Token", xsrfToken)
 	req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
 	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
-	resp2, err := client.Do(req)
+
+	var resp2 *http.Response
+	var err error
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		log.Printf("[INFO] Attempt %d/%d...\n", attempt, maxRetries)
+		resp2, err = client.Do(req)
+		if err != nil {
+			// Check if the error is a timeout error by checking for net.Error and the Timeout() method
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				log.Printf("[ERROR] Timeout occurred: %v, retrying in %v...\n", netErr, retryDelay)
+				time.Sleep(retryDelay) // Wait before retrying
+				continue
+			}
+			// If the error is not a timeout, exit the loop and return the error
+			log.Printf("[ERROR] Request failed with error: %v\n", err)
+			return nil, err
+		}
+		break
+
+	}
 	if err != nil {
 		return nil, err
+	}
+
+	if resp2 == nil {
+		// If we exhausted all retries and still have no response, return an error
+		return nil, errors.New("failed to get a response after 3 retries")
 	}
 	//defer resp2.Body.Close()
 
