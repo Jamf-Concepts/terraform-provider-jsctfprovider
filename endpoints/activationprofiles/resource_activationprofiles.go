@@ -438,7 +438,7 @@ func makepayloadstructNR(activationprofilename string) DataNR {
 	data.Capabilities.PrivateAccess.Enabled = true
 	data.Capabilities.DataPolicy.Enabled = false
 	data.Capabilities.ThreatDefence.Enabled = false
-	data.Capabilities.NetworkRelay.Enabled = false
+	data.Capabilities.NetworkRelay.Enabled = true
 	data.Capabilities.Wireguard.Enabled = false
 	data.Capabilities.Proxy.Enabled = false
 	data.Capabilities.Proxy.ControlledNetworkInterfaces = "CELLULAR_ONLY"
