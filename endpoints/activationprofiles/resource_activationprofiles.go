@@ -489,7 +489,6 @@ func makepayloadstructNR(activationprofilename string) DataNR {
 func validateIdP(v interface{}, k string) (ws []string, errors []error) {
 	allowedStatuses := map[string]struct{}{
 		"okta":         {},
-		"networkrelay": {},
 		"none":         {},
 	}
 
@@ -501,7 +500,7 @@ func validateIdP(v interface{}, k string) (ws []string, errors []error) {
 	// Convert the value to lowercase for case-insensitive comparison
 	lowercaseValue := strings.ToLower(value)
 	if _, valid := allowedStatuses[lowercaseValue]; !valid {
-		errors = append(errors, fmt.Errorf("%q must be one of %v, got %q", k, []string{"okta", "networkrelay", "none"}, value))
+		errors = append(errors, fmt.Errorf("%q must be one of %v, got %q", k, []string{"okta", "none"}, value))
 	}
 
 	return
@@ -527,7 +526,7 @@ func ResourceActivationProfile() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validateIdP,
 				Default:      "None",
-				Description:  "Allowed values of 'Okta', 'None, or 'NetworkRelay'. If NetworkRelay is selected, only Private Access will be enabled",
+				Description:  "Allowed values of 'Okta', 'None'",
 			},
 			"oktaconnectionid": {
 				Type:        schema.TypeString,
@@ -597,12 +596,6 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 	lowercaseValue := strings.ToLower(d.Get("idptype").(string))
 	if lowercaseValue == "okta" {
 		data := makepayloadstruct(d.Get("name").(string), d.Get("oktaconnectionid").(string), d.Get("privateaccess").(bool), d.Get("threatdefence").(bool), d.Get("datapolicy").(bool))
-		payload, err = json.Marshal(data)
-		if err != nil {
-			return fmt.Errorf("an error occurred: %s", "marshaling json")
-		}
-	} else if lowercaseValue == "networkrelay" {
-		data := makepayloadstructNR(d.Get("name").(string))
 		payload, err = json.Marshal(data)
 		if err != nil {
 			return fmt.Errorf("an error occurred: %s", "marshaling json")
