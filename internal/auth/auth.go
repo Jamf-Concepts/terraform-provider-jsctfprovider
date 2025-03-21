@@ -379,9 +379,16 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 				time.Sleep(retryDelay) // Wait before retrying
 				continue
 			}
-			// If the error is not a timeout, exit the loop and return the error
 			log.Printf("[ERROR] Request failed with error: %v\n", err)
-			return nil, err
+			time.Sleep(retryDelay) // Wait before retrying
+			continue
+			//return nil, err // do not return error but try again for non-timeout but errors
+		}
+		// Check HTTP response status
+		if resp2.StatusCode >= 400 {
+			log.Printf("[ERROR] Request failed with response code: %v\n", resp2.StatusCode)
+			time.Sleep(retryDelay) // Wait before retrying
+			continue
 		}
 		break
 
@@ -392,7 +399,7 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 
 	if resp2 == nil {
 		// If we exhausted all retries and still have no response, return an error
-		return nil, errors.New("failed to get a response after 3 retries")
+		return nil, errors.New("failed to get a response after all retries")
 	}
 	//defer resp2.Body.Close()
 
