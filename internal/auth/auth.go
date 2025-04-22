@@ -343,9 +343,9 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 	if sessionCookie == "" {
 		return nil, fmt.Errorf("error RADAR API not authenticated")
 	}
-	client := &http.Client{Timeout: 240 * time.Second}
+	client := &http.Client{Timeout: 121 * time.Second}
 
-	maxRetries := 3
+	maxRetries := 2
 	retryDelay := 2 * time.Second
 	log.Println("[INFO] Building the client")
 	log.Println("[INFO] incoming url is " + req.URL.Path)
