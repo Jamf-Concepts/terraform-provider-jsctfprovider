@@ -26,6 +26,9 @@ var pagjwt string
 var holdCustomerid string
 var providerDomainName string
 
+var holdUsername string
+var holdPassword string
+
 var protectAuthToken string
 var protectDomainname string
 
@@ -159,7 +162,8 @@ func AuthenticateRadarAPI(DomainName string, Username string, Password string, C
 	}
 
 	// Construct the authentication request body
-
+	holdUsername = Username //if we need to call Auth function again later
+	holdPassword = Password
 	authData := map[string]string{
 		"username":   Username, //hardcoded in PoC but can come from template or ENV
 		"password":   Password,
@@ -364,15 +368,17 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("X-Xsrf-Token", xsrfToken)
-	req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
-	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
 
 	var resp2 *http.Response
 	var err error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		log.Printf("[INFO] Attempt %d/%d...\n", attempt, maxRetries)
+		req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
+		log.Println("session cookie within loop is " + sessionCookie)
+		req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
 		resp2, err = client.Do(req)
 		if err != nil {
+			AuthenticateRadarAPI(providerDomainName, holdUsername, holdPassword, holdCustomerid) // try and get another cookie etc
 			// Check if the error is a timeout error by checking for net.Error and the Timeout() method
 			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 				log.Printf("[ERROR] Timeout occurred: %v, retrying in %v...\n", netErr, retryDelay)
@@ -386,6 +392,7 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 		}
 		// Check HTTP response status
 		if resp2.StatusCode >= 400 {
+			AuthenticateRadarAPI(providerDomainName, holdUsername, holdPassword, holdCustomerid) // try and get another cookie etc
 			log.Printf("[ERROR] Request failed with response code: %v\n", resp2.StatusCode)
 			time.Sleep(retryDelay) // Wait before retrying
 			continue
