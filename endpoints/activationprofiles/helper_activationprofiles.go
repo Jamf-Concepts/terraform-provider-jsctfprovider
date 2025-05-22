@@ -73,7 +73,7 @@ func getAPUnSupervisedManagedAppConfig(apID string) string {
 
 func getAPUnSupervisedPlist(apID string) string {
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/uem-deployment-template-service/v1/activation-profiles/%s/uems/JAMF/platforms/SUPERVISED_IOS/types/CONFIGURATION_PROFILE", apID), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/uem-deployment-template-service/v1/activation-profiles/%s/uems/JAMF/platforms/UNSUPERVISED_IOS/types/CONFIGURATION_PROFILE", apID), nil)
 	if err != nil {
 		return "payload not found"
 	}
