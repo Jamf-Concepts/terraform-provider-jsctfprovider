@@ -12,6 +12,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// Define a struct matching the response structure
+type ConfigsResponse struct {
+	Configs []struct {
+		ID string `json:"id"`
+	} `json:"configs"`
+}
+
 // Define the schema for the UEMC resource
 func ResourceUEMC() *schema.Resource {
 	return &schema.Resource{
@@ -69,7 +76,7 @@ func resourceUEMCCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	// Make a POST request to create a new uemc
-	req, err := http.NewRequest("PUT", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/config/{customerid}/emm-server"), bytes.NewBuffer(payload))
+	req, err := http.NewRequest("POST", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v2/config/emm-server"), bytes.NewBuffer(payload))
 	if err != nil {
 		return err
 	}
@@ -103,8 +110,8 @@ func resourceUEMCCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	// Set the resource ID... hint there's only 1 ID of UEMC!
-	d.SetId("1")
+	// Set the resource ID... apparently we can have more than one UEMC connection now!
+	d.SetId(response.ID)
 
 	// Set the resource ID
 	//d.SetId("example-vm-id")
@@ -116,7 +123,7 @@ func resourceUEMCCreate(d *schema.ResourceData, m interface{}) error {
 func resourceUEMCRead(d *schema.ResourceData, m interface{}) error {
 	// Make a GET request to read the details of an existing Okta IDP
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/sync-state/{customerid}"), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v2/config"), nil)
 	if err != nil {
 		return err
 	}
@@ -143,6 +150,20 @@ func resourceUEMCRead(d *schema.ResourceData, m interface{}) error {
 	// (this depends on the structure of the API response)
 	fmt.Println(string(body))
 
+	// Parse the response JSON and extract the ID
+	var configsResp ConfigsResponse
+	if err := json.Unmarshal(body, &configsResp); err != nil {
+		return err
+	}
+
+	if len(configsResp.Configs) > 0 {
+		configID := configsResp.Configs[0].ID
+		fmt.Println("Extracted config ID:", configID)
+
+	} else {
+		return fmt.Errorf("no configs found in response")
+	}
+
 	return nil
 }
 
@@ -157,9 +178,10 @@ func resourceUEMCUpdate(d *schema.ResourceData, m interface{}) error {
 
 // Define the delete function for the Okta resource
 func resourceUEMCDelete(d *schema.ResourceData, m interface{}) error {
-	// Make a DELETE request to delete an existing Okta
-
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v1/config/{customerid}"), nil)
+	// Make a DELETE request to delete an existing UEMC
+	//First we need to get the config ID of UEMC... we'll assume it's the first one for now.
+	id := d.Id() // Get the current resource ID
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/connector-service/v2/config/%s", id), nil)
 	if err != nil {
 		return err
 	}
