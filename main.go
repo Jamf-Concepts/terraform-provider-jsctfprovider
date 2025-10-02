@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"jsctfprovider/endpoints/activationprofiles"
 	"jsctfprovider/endpoints/blockpages"
@@ -20,7 +19,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
@@ -129,8 +127,7 @@ func main() {
 					"jsc_hostnamemapping":     hostnamemapping.DataSourceHostnameMapping(),
 					"jsc_protect_preventlist": protectpreventlists.DataSourcePreventlists(),
 				},
-				// Use ConfigureContextFunc so we can return diagnostics and emit a deprecation warning
-				ConfigureContextFunc: providerConfigureContext,
+				ConfigureFunc: providerConfigure,
 			}
 
 		},
@@ -178,34 +175,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	return nil, nil
-}
-
-// providerConfigureContext wraps the old Configure function to provide
-// diagnostics including a deprecation warning. Terraform will show the
-// deprecation message when the provider is configured.
-func providerConfigureContext(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Add a deprecation error (will fail provider configuration)
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Warning,
-		Summary:  "Provider deprecated",
-		Detail:   "This provider is deprecated. Please migrate to Jamf-Concepts/jsctfprovider or contact the maintainers for guidance.",
-	})
-
-	// Call existing configure logic
-	_, err := providerConfigure(d)
-	if err != nil {
-		// Return the error as a diagnostic
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Provider configuration failed",
-			Detail:   err.Error(),
-		})
-		return nil, diags
-	}
-
-	return nil, diags
 }
 
 // GetClientPassword retrieves the 'password' value from the Terraform configuration.
