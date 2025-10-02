@@ -3,12 +3,10 @@
 page_title: "jsc Provider"
 subcategory: ""
 description: |-
-  
+  This provider is no longer maintained. When configuring Terraform, the provider will emit a deprecation warning. Please migrate to the Jamf-Concepts/jsctfprovider as soon as possible.
 ---
 
 # jsc Provider
-
-
 
 ## Example Usage
 
