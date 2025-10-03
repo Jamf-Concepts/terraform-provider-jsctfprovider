@@ -36,7 +36,7 @@ var protectDomainname string
 func AuthenticateProtect(domainname string, clientid string, clientpassword string) error {
 
 	authpayload := "{\"client_id\": \"" + clientid + "\", \"password\": \"" + clientpassword + "\"}"
-	fmt.Println("Payload for auth  creating request:", authpayload)
+	fmt.Printf("Payload for auth creating request: client_id=%s, password=[REDACTED]\n", clientid)
 	url := fmt.Sprintf("https://%s/token", domainname)
 
 	req, err := http.NewRequest("POST", url, strings.NewReader(authpayload))
