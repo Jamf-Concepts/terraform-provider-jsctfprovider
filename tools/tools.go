@@ -1,3 +1,4 @@
+// Copyright 2025, Jamf Software LLC.
 //go:build tools
 
 package tools
