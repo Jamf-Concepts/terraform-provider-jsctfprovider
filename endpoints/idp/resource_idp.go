@@ -8,9 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"jsctfprovider/internal/auth"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"jsctfprovider/internal/auth"
 )
 
 // Define the schema for the Okta resource
