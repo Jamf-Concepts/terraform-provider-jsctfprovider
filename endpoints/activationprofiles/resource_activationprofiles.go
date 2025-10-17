@@ -66,7 +66,7 @@ type Data struct {
 	CanLeave                  bool                   `json:"canLeave"`
 	LicencedAmalgams          []LicencedAmalgam      `json:"licencedAmalgams"`
 	LicenceSpecifics          struct {
-		EligibleForCloudProxy bool `json:"eligibleForCloudProxy"`
+		EligibleForCloudProxy       bool   `json:"eligibleForCloudProxy"`
 	} `json:"licenceSpecifics"`
 	Idp struct {
 		Type               string      `json:"type"`
@@ -114,31 +114,33 @@ type Data struct {
 }
 
 type DataNR struct {
-	Code                      interface{}            `json:"code"`
-	Name                      string                 `json:"name"`
-	GroupId                   string                 `json:"groupId"`
-	Used                      interface{}            `json:"used"`
-	Management                Management             `json:"management"`
-	Passcode                  interface{}            `json:"passcode"`
-	Errors                    map[string]interface{} `json:"errors"`
-	ExtraDeviceAttributes     interface{}            `json:"extraDeviceAttributes"`
-	Idp                       interface{}            `json:"idp"`
-	ActiveTab                 string                 `json:"activeTab"`
-	AvailableProxyInterfaces  []string               `json:"availableProxyInterfaces"`
-	SecureDnsDefaultMandatory bool                   `json:"secureDnsDefaultMandatory"`
-	LocationServices          string                 `json:"locationServices"`
-	CloudProxy                string                 `json:"cloudProxy"`
-	InAppDnsControl           string                 `json:"inAppDnsControl"`
-	RootCertificates          RootCertificates       `json:"rootCertificates"`
-	HasFailed                 bool                   `json:"hasFailed"`
-	IsLoading                 bool                   `json:"isLoading"`
-	IsSaving                  bool                   `json:"isSaving"`
-	IsUpdating                bool                   `json:"isUpdating"`
-	IsOptionsLoaded           bool                   `json:"isOptionsLoaded"`
-	IsLoadingOptions          bool                   `json:"isLoadingOptions"`
-	CanLeave                  bool                   `json:"canLeave"`
-	LicencedAmalgams          []LicencedAmalgam      `json:"licencedAmalgams"`
-	LicenceSpecifics          struct {
+	Code                        interface{}            `json:"code"`
+	Name                        string                 `json:"name"`
+	GroupId                     string                 `json:"groupId"`
+	Used                        interface{}            `json:"used"`
+	Management                  Management             `json:"management"`
+	Passcode                    interface{}            `json:"passcode"`
+	Errors                      map[string]interface{} `json:"errors"`
+	ExtraDeviceAttributes       interface{}            `json:"extraDeviceAttributes"`
+	Idp                         interface{}            `json:"idp"`
+	ActiveTab                   string                 `json:"activeTab"`
+	AvailableProxyInterfaces    []string               `json:"availableProxyInterfaces"`
+	SecureDnsDefaultMandatory   bool                   `json:"secureDnsDefaultMandatory"`
+	LocationServices            string                 `json:"locationServices"`
+	CloudProxy                  string                 `json:"cloudProxy"`
+	NetworkCompatibilityMode    string                 `json:"networkCompatibilityMode"`
+	NetworkRelayTamperProofness string                 `json:"networkRelayTamperProofness"`
+	InAppDnsControl             string                 `json:"inAppDnsControl"`
+	RootCertificates            RootCertificates       `json:"rootCertificates"`
+	HasFailed                   bool                   `json:"hasFailed"`
+	IsLoading                   bool                   `json:"isLoading"`
+	IsSaving                    bool                   `json:"isSaving"`
+	IsUpdating                  bool                   `json:"isUpdating"`
+	IsOptionsLoaded             bool                   `json:"isOptionsLoaded"`
+	IsLoadingOptions            bool                   `json:"isLoadingOptions"`
+	CanLeave                    bool                   `json:"canLeave"`
+	LicencedAmalgams            []LicencedAmalgam      `json:"licencedAmalgams"`
+	LicenceSpecifics            struct {
 		EligibleForCloudProxy bool `json:"eligibleForCloudProxy"`
 	} `json:"licenceSpecifics"`
 	Capabilities struct {
@@ -151,6 +153,12 @@ type DataNR struct {
 		DataPolicy struct {
 			Enabled bool `json:"enabled"`
 		} `json:"dataPolicy"`
+		VulnerabilityManagement struct {
+			Enabled bool `json:"enabled"`
+		} `json:"vulnerabilityManagement"`
+		NetworkSecurity struct {
+			Enabled bool `json:"enabled"`
+		} `json:"networkSecurity"`
 		DeviceIdentity struct {
 			Enabled        bool     `json:"enabled"`
 			TrustConsumers []string `json:"trustConsumers"`
@@ -159,7 +167,8 @@ type DataNR struct {
 			Enabled bool `json:"enabled"`
 		} `json:"physicalAccess"`
 		NetworkRelay struct {
-			Enabled bool `json:"enabled"`
+			Enabled     bool `json:"enabled"`
+			TamperProof bool `json:"tamperProof,omitempty"`
 		} `json:"networkRelay"`
 		Wireguard struct {
 			Enabled bool `json:"enabled"`
@@ -230,7 +239,8 @@ type DataNoIdP struct {
 			Enabled bool `json:"enabled"`
 		} `json:"physicalAccess"`
 		NetworkRelay struct {
-			Enabled bool `json:"enabled"`
+			Enabled     bool `json:"enabled"`
+			TamperProof bool `json:"tamperProof,omitempty"`
 		} `json:"networkRelay"`
 		Wireguard struct {
 			Enabled bool `json:"enabled"`
@@ -412,78 +422,70 @@ func makepayloadstructnoidp(activationprofilename string, threatdefence bool, da
 }
 
 func makepayloadstructNR(activationprofilename string) DataNR {
-	// Create an instance of the Data struct
-
 	data := DataNR{
 		Name:             activationprofilename,
 		GroupId:          "DEFAULT",
 		ActiveTab:        "INTUNE",
-		LocationServices: "BEST_EFFORT",
+		LocationServices: "DISABLED", // Matches HAR
 		CloudProxy:       "NONE",
-		InAppDnsControl:  "REQUIRED",
+		InAppDnsControl:  "DISABLED",
 		RootCertificates: RootCertificates{
-			Enabled: true,
+			Enabled: false,
 		},
-		HasFailed: false,
-		IsLoading: false,
-		// Populate other fields as needed...
+		HasFailed:        false,
+		IsLoading:        false,
+		IsOptionsLoaded:  true,
+		IsLoadingOptions: false,
 		LicenceSpecifics: struct {
 			EligibleForCloudProxy bool `json:"eligibleForCloudProxy"`
 		}{EligibleForCloudProxy: false},
 	}
-	data.InAppDnsControl = "DISABLED" //need to turn-off if only PA selected
 
-	// Additional capabilities
-	data.Capabilities.DeviceIdentity.Enabled = false
-	data.Capabilities.PhysicalAccess.Enabled = false
+	// Top-level NR fields
+	data.NetworkCompatibilityMode = "NONE"
+	data.NetworkRelayTamperProofness = "USER_CONTROLLABLE"
+
+	// Capabilities based on HAR pattern
 	data.Capabilities.PrivateAccess.Enabled = true
+	data.Capabilities.VulnerabilityManagement.Enabled = false
+	data.Capabilities.NetworkSecurity.Enabled = false
 	data.Capabilities.DataPolicy.Enabled = false
-	data.Capabilities.ThreatDefence.Enabled = false
-	data.Capabilities.NetworkRelay.Enabled = false
+	data.Capabilities.DeviceIdentity.Enabled = false
+	data.Capabilities.DeviceIdentity.TrustConsumers = []string{"AWS"}
+	data.Capabilities.PhysicalAccess.Enabled = false
 	data.Capabilities.Wireguard.Enabled = false
 	data.Capabilities.Proxy.Enabled = false
 	data.Capabilities.Proxy.ControlledNetworkInterfaces = "CELLULAR_ONLY"
 	data.Capabilities.SecureDns.Enabled = false
 	data.Capabilities.SecureDns.Mandatory = true
 	data.Capabilities.OnDevice.Enabled = false
+	data.Capabilities.NetworkRelay.Enabled = true
+	data.Capabilities.NetworkRelay.TamperProof = false
 
-	//management
-	data.Management.TimeZone = "America/Los_Angeles"
+	// Management section
+	data.Management.TimeZone = "America/New_York"
 	data.Management.EffectiveState = nil
 	data.Management.LastUsed = nil
 
-	// Populate Licenced Amalgams
+	// Licenced Amalgams (you can reuse or simplify as needed)
 	data.LicencedAmalgams = []LicencedAmalgam{
 		{
-			ServiceCapabilityCombination: []string{"deviceIdentity", "dataPolicy", "privateAccess"},
+			ServiceCapabilityCombination: []string{"privateAccess", "networkSecurity", "vulnerabilityManagement"},
 			CloudProxy:                   nil,
-			Platforms:                    []string{"Mac"},
-			InAppDnsControl:              []string{"REQUIRED"},
-			RootCertificates:             "OPTIONAL",
-			DefaultLocationServices:      "BEST_EFFORT",
-		},
-		{
-			ServiceCapabilityCombination: []string{"threatDefence"},
-			CloudProxy:                   nil,
-			Platforms:                    []string{"ChromeOS", "iOS", "Windows", "Galaxy", "Android", "Mac"},
-			InAppDnsControl:              []string{"REQUIRED", "OPTIONAL"},
+			Platforms:                    []string{"Mac", "iOS"},
+			InAppDnsControl:              []string{"OPTIONAL", "REQUIRED"},
 			RootCertificates:             "OPTIONAL",
 			DefaultLocationServices:      "DISABLED",
 		},
-		// Add more Licenced Amalgams as needed...
 	}
 
-	// Marshal the struct into JSON
+	// Print for debugging
 	jsonData, err := json.MarshalIndent(data, "", "    ")
-	if err != nil {
-		fmt.Println("Error marshaling JSON:", err)
-		//return
+	if err == nil {
+		fmt.Println(string(jsonData))
 	}
 
-	// Print the JSON data
-	fmt.Println(string(jsonData))
 	return data
-
 }
 
 // Define the validation function

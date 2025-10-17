@@ -23,18 +23,18 @@ func ResourceOktaIdp() *schema.Resource {
 		// Define the attributes of the okta resource
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "Friendly name.",
 			},
 			"orgdomain": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "OrgDomain of Okta tenant",
 			},
 			"clientid": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "Client ID of Okta App.",
 			},
 			// Add more attributes as needed
@@ -44,7 +44,6 @@ func ResourceOktaIdp() *schema.Resource {
 
 // Define the create function for the okta resource
 func resourceOktaIdpCreate(d *schema.ResourceData, m interface{}) error {
-
 
 	// Construct the request body
 	vm := map[string]interface{}{
@@ -106,8 +105,6 @@ func resourceOktaIdpCreate(d *schema.ResourceData, m interface{}) error {
 func resourceOktaIdpRead(d *schema.ResourceData, m interface{}) error {
 	// Make a GET request to read the details of an existing Okta IDP
 
-
-
 	req, err := http.NewRequest("GET", ("https://radar.wandera.com/gate/identity-service/v1/connections"), nil)
 	if err != nil {
 		return err
@@ -150,8 +147,6 @@ func resourceOktaIdpUpdate(d *schema.ResourceData, m interface{}) error {
 // Define the delete function for the Okta resource
 func resourceOktaIdpDelete(d *schema.ResourceData, m interface{}) error {
 	// Make a DELETE request to delete an existing Okta
-
-
 
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/identity-service/v1/connections/%s", d.Id()), nil)
 	if err != nil {
