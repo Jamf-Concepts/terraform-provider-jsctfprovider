@@ -198,7 +198,27 @@ func AuthenticateRadarAPI(DomainName string, Username string, Password string, C
 
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("authentication failed: %s. This provider only support local email:pass combinations and not any SSO/SAML credentials", resp.Status)
+		// Try Jamf ID Authentication as fallback
+		fmt.Printf("Local auth failed (%s), attempting Jamf ID authentication...\n", resp.Status)
+		jamfSession, jamfXsrf, err := AuthenticateViaJamfID(DomainName, Username, Password)
+		if err != nil {
+			return fmt.Errorf("authentication failed: %s. Local auth failed and Jamf ID auth failed: %v", resp.Status, err)
+		}
+		// Success! Set the package-level variables
+		sessionCookie = jamfSession
+		if jamfXsrf != "" {
+			xsrfToken = jamfXsrf
+		}
+		// We can return early or fall through to let findCustomerid run?
+		// Ensure we don't try to parse the body of the FAILED local auth response below.
+
+		if Customerid == "empty" {
+			//Customerid not provided so attempt to find from endpoint
+			findCustomerid(DomainName)
+		} else {
+			holdCustomerid = Customerid
+		}
+		return nil
 	}
 
 	// Read the response body
