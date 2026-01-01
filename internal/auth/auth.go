@@ -290,7 +290,7 @@ func findCustomerid(DomainName string) {
 	// Unmarshal JSON into a map[string]interface{}
 	var result map[string]interface{}
 	jsonerr := json.Unmarshal(body, &result)
-	if err != nil {
+	if jsonerr != nil {
 		fmt.Println("Error:", jsonerr)
 		return
 	}
@@ -336,7 +336,7 @@ func findCustomerid(DomainName string) {
 		var data []map[string]json.RawMessage
 		errmarshall := json.Unmarshal([]byte(body), &data)
 		if errmarshall != nil {
-			fmt.Println("Error:", err)
+			fmt.Println("Error:", errmarshall)
 			return
 		}
 
