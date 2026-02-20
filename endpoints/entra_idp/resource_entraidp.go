@@ -12,6 +12,7 @@ import (
 	"jsctfprovider/internal/auth"
 )
 
+
 type entraConnection struct {
 	ID    string `json:"id"`
 	Name  string `json:"name"`
@@ -41,6 +42,12 @@ func ResourceEntraIdp() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Current state of the IdP connection. INITIAL until Microsoft OAuth consent is completed, then APPROVED.",
+			},
+			"consent_url": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
+				Description: "Microsoft OAuth consent URL generated after connection creation. Visit this URL in a browser to complete IdP setup. Marked sensitive — will not appear in plan output.",
 			},
 		},
 	}
@@ -117,15 +124,10 @@ func resourceEntraIdpCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("failed to parse consent transaction response: %v", err)
 	}
 
-	// Print the consent URL for the admin. Intentionally not stored in state.
-	fmt.Println("==============================================")
-	fmt.Println("jsc_entra_idp: Microsoft OAuth consent required.")
-	fmt.Println("Visit the following URL to complete IdP setup:")
-	fmt.Println("")
-	fmt.Println(consentResult.ConsentURL)
-	fmt.Println("")
-	fmt.Println("After completing consent, run: terraform refresh")
-	fmt.Println("==============================================")
+	// Store the consent URL as a sensitive computed attribute.
+	// Terraform will redact it from plan/apply output but it is accessible
+	// via `terraform output` for the admin to complete the OAuth consent flow.
+	d.Set("consent_url", consentResult.ConsentURL)
 
 	return nil
 }

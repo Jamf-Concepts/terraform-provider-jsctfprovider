@@ -15,14 +15,15 @@ Entra IdP connections require a manual consent step that cannot be automated. Du
 
 1. Creates the Entra connection in JSC
 2. Triggers a consent transaction to generate a Microsoft OAuth URL
-3. **Prints the URL to the console** — visit it in a browser to grant consent
-4. After completing consent, run `terraform refresh` to update the `state` attribute to `APPROVED`
+3. Stores the URL as a **sensitive computed attribute** (`consent_url`) — retrieve it with `terraform output consent_url`
+4. Visit the URL in a browser to grant consent
+5. After completing consent, run `terraform refresh` to update the `state` attribute to `APPROVED`
 
-The consent URL is **not stored in Terraform state** to avoid persisting OAuth tokens in state backends.
+The `consent_url` attribute is marked `sensitive = true` — it will not appear in plan or apply output but is stored in Terraform state.
 
 ## Notes
 
-- Update is implemented as delete + recreate — a new consent URL will be printed
+- Update is implemented as delete + recreate — a new consent URL will be generated
 - If the connection is deleted outside Terraform, the next `terraform plan` will detect drift and offer to recreate it
 - Connection states: `INITIAL` → `PENDING` → `APPROVING` → `APPROVED` | `DENIED`
 
@@ -35,6 +36,11 @@ resource "jsc_entra_idp" "entra_connection" {
 
 output "entra_idp_state" {
   value = jsc_entra_idp.entra_connection.state
+}
+
+output "entra_consent_url" {
+  value     = jsc_entra_idp.entra_connection.consent_url
+  sensitive = true
 }
 ```
 
@@ -49,3 +55,4 @@ output "entra_idp_state" {
 
 - `id` (String) The ID of this resource.
 - `state` (String) Current state of the IdP connection. `INITIAL` until Microsoft OAuth consent is completed, then `APPROVED`.
+- `consent_url` (String, Sensitive) Microsoft OAuth consent URL. Visit this URL in a browser to complete IdP setup. Redacted from plan/apply output.
