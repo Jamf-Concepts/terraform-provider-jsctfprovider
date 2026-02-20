@@ -98,6 +98,10 @@ func resourceSwiftConnectCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("failed to parse SwiftConnect create response: %v", err)
 	}
 
+	if response.ID == "" {
+		return fmt.Errorf("SwiftConnect integration was created but API returned an empty ID")
+	}
+
 	d.SetId(response.ID)
 	return nil
 }
