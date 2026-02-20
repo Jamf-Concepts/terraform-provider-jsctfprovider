@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"jsctfprovider/endpoints/admin"
 	"jsctfprovider/endpoints/activationprofiles"
 	"jsctfprovider/endpoints/blockpages"
 	"jsctfprovider/endpoints/categories"
@@ -108,6 +109,7 @@ func main() {
 				},
 				// Define the resources that this provider manages
 				ResourcesMap: map[string]*schema.Resource{
+					"jsc_admin":              admin.ResourceAdmin(),
 					"jsc_oktaidp":             idp.ResourceOktaIdp(),
 					"jsc_uemc":                uemc.ResourceUEMC(),
 					"jsc_blockpage":           blockpages.ResourceBlockPage(),
