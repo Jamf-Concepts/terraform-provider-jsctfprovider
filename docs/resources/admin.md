@@ -11,7 +11,7 @@ Manages a JSC admin account. Used in the SwiftConnect Mini Onboarder to provisio
 
 ## Notes
 
-- Update is implemented as delete + recreate (PUT endpoint inferred but not confirmed via API traffic capture)
+- Update is implemented as delete + recreate (PUT endpoint not confirmed)
 - A 404 on read causes Terraform to mark the resource as destroyed and recreate on next `apply`
 - Known roles: `WRITE_ADMIN`, `SUPER_ADMIN`, `GLOBAL_ADMIN`, `MAGIC`
 - `SUPER_ADMIN` stacks on top of `WRITE_ADMIN` — a super admin has both roles

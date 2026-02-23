@@ -374,7 +374,13 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 	retryDelay := 2 * time.Second
 	log.Println("[INFO] Building the client")
 	log.Println("[INFO] incoming url is " + req.URL.Path)
-	req.URL.RawQuery += "customerId=" + holdCustomerid
+
+	// Properly append customerId to existing query parameters
+	if req.URL.RawQuery != "" {
+		req.URL.RawQuery += "&customerId=" + holdCustomerid
+	} else {
+		req.URL.RawQuery = "customerId=" + holdCustomerid
+	}
 
 	log.Println("new url query is " + req.URL.RawQuery)
 	req.URL.Path = strings.Replace(req.URL.Path, "{customerid}", holdCustomerid, -1)

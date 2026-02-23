@@ -43,10 +43,19 @@ type adminRequest struct {
 
 type adminResponse struct {
 	ID                   string                    `json:"id"`
+	EntityType           string                    `json:"entityType"`
+	EntityId             string                    `json:"entityId"`
 	Profile              adminProfile              `json:"profile"`
 	Authentication       adminAuthentication       `json:"authentication"`
 	Authorization        adminAuthorization        `json:"authorization"`
 	NotificationSettings adminNotificationSettings `json:"notificationSettings"`
+}
+
+type adminListResponse struct {
+	Page       int             `json:"page"`
+	PageSize   int             `json:"pageSize"`
+	TotalCount int             `json:"totalCount"`
+	Data       []adminResponse `json:"data"`
 }
 
 func toStringSlice(in []interface{}) []string {
@@ -149,11 +158,68 @@ func resourceAdminCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("failed to read jsc_admin create response: %v", err)
 	}
 
+	// The API returns an empty body on successful creation.
+	// We need to list admins with pagination to find the newly created admin and get its ID.
+	if len(body) == 0 || string(body) == "" {
+		username := d.Get("username").(string)
+
+		// List admins with pagination to find the newly created admin
+		// Note: Don't add query params here - auth.MakeRequest adds customerId and will break the URL
+		listReq, err := http.NewRequest("GET", "https://radar.wandera.com/gate/admin-service/v4/customers/{customerid}/admins", nil)
+		if err != nil {
+			return fmt.Errorf("failed to build admin list request: %v", err)
+		}
+
+		// Manually construct query string with pagination params
+		q := listReq.URL.Query()
+		q.Add("page", "0")
+		q.Add("pageSize", "100")
+		listReq.URL.RawQuery = q.Encode()
+
+		listResp, err := auth.MakeRequest(listReq)
+		if err != nil {
+			return fmt.Errorf("admin list request failed: %v", err)
+		}
+		defer listResp.Body.Close()
+
+		if listResp.StatusCode != http.StatusOK {
+			return fmt.Errorf("failed to list admins: %s", listResp.Status)
+		}
+
+		listBody, err := ioutil.ReadAll(listResp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read admin list response: %v", err)
+		}
+
+		var listResponse adminListResponse
+		if err := json.Unmarshal(listBody, &listResponse); err != nil {
+			return fmt.Errorf("failed to parse admin list response: %v", err)
+		}
+
+		// Find our admin by username
+		var adminID string
+		for _, admin := range listResponse.Data {
+			if admin.Authentication.Username == username {
+				adminID = admin.ID
+				break
+			}
+		}
+
+		if adminID == "" {
+			return fmt.Errorf("admin was created but could not be found in the list (username: %s)", username)
+		}
+
+		// Set the real admin ID
+		d.SetId(adminID)
+		return nil
+	}
+
+	// If we got a body with JSON, parse it
 	var response struct {
 		ID string `json:"id"`
 	}
 	if err := json.Unmarshal(body, &response); err != nil {
-		return fmt.Errorf("failed to parse jsc_admin create response: %v", err)
+		return fmt.Errorf("failed to parse jsc_admin create response: %v (body was: %s)", err, string(body))
 	}
 
 	if response.ID == "" {
@@ -165,43 +231,56 @@ func resourceAdminCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceAdminRead(d *schema.ResourceData, m interface{}) error {
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/admin-service/v4/customers/{customerid}/admins/%s", d.Id()), nil)
+	// List admins with pagination to find ours by ID
+	req, err := http.NewRequest("GET", "https://radar.wandera.com/gate/admin-service/v4/customers/{customerid}/admins", nil)
 	if err != nil {
-		return fmt.Errorf("failed to build jsc_admin read request: %v", err)
+		return fmt.Errorf("failed to build admin list request: %v", err)
 	}
+
+	// Add pagination query params properly
+	q := req.URL.Query()
+	q.Add("page", "0")
+	q.Add("pageSize", "100")
+	req.URL.RawQuery = q.Encode()
 
 	resp, err := auth.MakeRequest(req)
 	if err != nil {
-		return fmt.Errorf("jsc_admin read request failed: %v", err)
+		return fmt.Errorf("admin list request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotFound {
-		d.SetId("")
-		return nil
-	}
-
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to read jsc_admin: %s", resp.Status)
+		return fmt.Errorf("failed to list admins: %s", resp.Status)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read jsc_admin read response: %v", err)
+		return fmt.Errorf("failed to read admin list response: %v", err)
 	}
 
-	var response adminResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		return fmt.Errorf("failed to parse jsc_admin read response: %v", err)
+	var listResponse adminListResponse
+	if err := json.Unmarshal(body, &listResponse); err != nil {
+		return fmt.Errorf("failed to parse admin list response: %v", err)
 	}
 
-	d.Set("name", response.Profile.Name)
-	d.Set("username", response.Authentication.Username)
-	d.Set("sso_enabled", response.Authentication.SSO.Enabled)
-	d.Set("roles", response.Authorization.Roles)
-	d.Set("permissions", response.Authorization.Permissions)
-	d.Set("notification_categories", response.NotificationSettings.SubscribedNotificationCategories)
+	// Find our admin by ID
+	adminID := d.Id()
 
+	for _, admin := range listResponse.Data {
+		if admin.ID == adminID {
+			// Found it! Update all fields
+			d.Set("name", admin.Profile.Name)
+			d.Set("username", admin.Authentication.Username)
+			d.Set("sso_enabled", admin.Authentication.SSO.Enabled)
+			d.Set("roles", admin.Authorization.Roles)
+			d.Set("permissions", admin.Authorization.Permissions)
+			d.Set("notification_categories", admin.NotificationSettings.SubscribedNotificationCategories)
+			return nil
+		}
+	}
+
+	// Not found - resource has been deleted outside Terraform
+	d.SetId("")
 	return nil
 }
 
@@ -213,7 +292,10 @@ func resourceAdminUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceAdminDelete(d *schema.ResourceData, m interface{}) error {
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/admin-service/v4/customers/{customerid}/admins/%s", d.Id()), nil)
+	// Use the admin ID directly (retrieved during create/read)
+	adminID := d.Id()
+
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/admin-service/v4/customers/{customerid}/admins/%s", adminID), nil)
 	if err != nil {
 		return fmt.Errorf("failed to build jsc_admin delete request: %v", err)
 	}
@@ -224,7 +306,7 @@ func resourceAdminDelete(d *schema.ResourceData, m interface{}) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotFound {
 		return fmt.Errorf("failed to delete jsc_admin: %s", resp.Status)
 	}
 
