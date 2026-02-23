@@ -13,6 +13,7 @@ import (
 	pagvpnroutes "jsctfprovider/endpoints/pag_vpnroutes"
 	pagztnaapp "jsctfprovider/endpoints/pag_ztna_app"
 	physicalaccess "jsctfprovider/endpoints/physical_access"
+	ztnaapp "jsctfprovider/endpoints/ztna_app"
 	protectpreventlists "jsctfprovider/endpoints/protect_preventlists"
 	"jsctfprovider/endpoints/routes"
 	"jsctfprovider/endpoints/uemc"
@@ -116,6 +117,7 @@ func main() {
 					"jsc_ap":                  activationprofiles.ResourceActivationProfile(),
 					"jsc_hostnamemapping":     hostnamemapping.ResourceHostnameMapping(),
 					"jsc_pag_ztnaapp":         pagztnaapp.ResourcePAGZTNAApp(),
+					"jsc_app":                 ztnaapp.ResourceZTNAApp(),
 					"jsc_protect_preventlist": protectpreventlists.ResourcePreventlists(),
 					"jsc_swiftconnect":         physicalaccess.ResourceSwiftConnect(),
 				},
