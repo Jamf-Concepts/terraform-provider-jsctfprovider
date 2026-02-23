@@ -6,6 +6,7 @@ import (
 	"jsctfprovider/endpoints/admin"
 	"jsctfprovider/endpoints/activationprofiles"
 	"jsctfprovider/endpoints/blockpages"
+	entraidp "jsctfprovider/endpoints/entra_idp"
 	"jsctfprovider/endpoints/categories"
 	"jsctfprovider/endpoints/groups"
 	"jsctfprovider/endpoints/hostnamemapping"
@@ -113,6 +114,7 @@ func main() {
 				ResourcesMap: map[string]*schema.Resource{
 					"jsc_admin":              admin.ResourceAdmin(),
 					"jsc_oktaidp":             idp.ResourceOktaIdp(),
+					"jsc_entra_idp":           entraidp.ResourceEntraIdp(),
 					"jsc_uemc":                uemc.ResourceUEMC(),
 					"jsc_blockpage":           blockpages.ResourceBlockPage(),
 					"jsc_ztna":                ztna.Resourceztna(),
