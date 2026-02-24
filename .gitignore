@@ -2,7 +2,7 @@
 
 .DS_Store
 terraform-jsc-beta
-terraform-provider-jsctf
+terraform-provider-jsctf*
 vendor*
 tools/bin*
 private*
