@@ -15,9 +15,9 @@ Entra IdP connections require a manual consent step that cannot be automated. Du
 
 1. Creates the Entra connection in JSC
 2. Triggers a consent transaction to generate a Microsoft OAuth URL
-3. Stores the URL as a **sensitive computed attribute** (`consent_url`) — retrieve it with `terraform output consent_url`
+3. Stores the URL in the `consent_url` attribute — visible in apply output and retrievable with `terraform output entra_consent_url`
 4. Visit the URL in a browser to grant consent
-5. After completing consent, run `terraform refresh` to update the `state` attribute to `APPROVED`
+5. After completing consent, run `terraform refresh` — `state` updates to `APPROVED` and `consent_url` is cleared from state automatically
 
 
 ## Notes
@@ -53,4 +53,4 @@ output "entra_consent_url" {
 
 - `id` (String) The ID of this resource.
 - `state` (String) Current state of the IdP connection. `INITIAL` until Microsoft OAuth consent is completed, then `APPROVED`.
-- `consent_url` (String) Microsoft OAuth consent URL. Visit this URL in a browser to complete IdP setup.
+- `consent_url` (String) Microsoft OAuth consent URL. Visit this URL in a browser to complete IdP setup. Cleared automatically after `terraform refresh` once consent is approved.

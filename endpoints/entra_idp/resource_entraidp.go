@@ -123,9 +123,8 @@ func resourceEntraIdpCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("failed to parse consent transaction response: %v", err)
 	}
 
-	// Store the consent URL as a sensitive computed attribute.
-	// Terraform will redact it from plan/apply output but it is accessible
-	// via `terraform output` for the admin to complete the OAuth consent flow.
+	// Store the consent URL so the admin can retrieve it and complete the OAuth
+	// consent flow. Cleared automatically by Read once state reaches APPROVED.
 	d.Set("consent_url", consentResult.ConsentURL)
 
 	return nil
@@ -162,6 +161,11 @@ func resourceEntraIdpRead(d *schema.ResourceData, m interface{}) error {
 		if c.ID == d.Id() {
 			d.Set("name", c.Name)
 			d.Set("state", c.State)
+			// Clear the consent URL once consent is complete — it is only needed
+			// during the INITIAL/PENDING window and should not persist in state.
+			if c.State == "APPROVED" {
+				d.Set("consent_url", "")
+			}
 			return nil
 		}
 	}
