@@ -12,6 +12,7 @@ import (
 	pagapptemplates "jsctfprovider/endpoints/pag_apptemplates"
 	pagvpnroutes "jsctfprovider/endpoints/pag_vpnroutes"
 	pagztnaapp "jsctfprovider/endpoints/pag_ztna_app"
+	ztnaapp "jsctfprovider/endpoints/ztna_app"
 	physicalaccess "jsctfprovider/endpoints/physical_access"
 	protectpreventlists "jsctfprovider/endpoints/protect_preventlists"
 	"jsctfprovider/endpoints/routes"
@@ -116,6 +117,7 @@ func main() {
 					"jsc_ap":                  activationprofiles.ResourceActivationProfile(),
 					"jsc_hostnamemapping":     hostnamemapping.ResourceHostnameMapping(),
 					"jsc_pag_ztnaapp":         pagztnaapp.ResourcePAGZTNAApp(),
+					"jsc_access_policy":       ztnaapp.ResourceZTNAApp(),
 					"jsc_protect_preventlist": protectpreventlists.ResourcePreventlists(),
 					"jsc_swiftconnect":         physicalaccess.ResourceSwiftConnect(),
 				},
