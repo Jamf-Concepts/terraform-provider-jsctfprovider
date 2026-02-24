@@ -8,10 +8,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"jsctfprovider/internal/auth"
-)
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
 
 type entraConnection struct {
 	ID    string `json:"id"`
@@ -46,8 +46,7 @@ func ResourceEntraIdp() *schema.Resource {
 			"consent_url": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Sensitive:   true,
-				Description: "Microsoft OAuth consent URL generated after connection creation. Visit this URL in a browser to complete IdP setup. Marked sensitive — will not appear in plan output.",
+				Description: "Microsoft OAuth consent URL generated after connection creation. Visit this URL in a browser to complete IdP setup.",
 			},
 		},
 	}

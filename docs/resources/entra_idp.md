@@ -19,7 +19,6 @@ Entra IdP connections require a manual consent step that cannot be automated. Du
 4. Visit the URL in a browser to grant consent
 5. After completing consent, run `terraform refresh` to update the `state` attribute to `APPROVED`
 
-The `consent_url` attribute is marked `sensitive = true` — it will not appear in plan or apply output but is stored in Terraform state.
 
 ## Notes
 
@@ -40,7 +39,6 @@ output "entra_idp_state" {
 
 output "entra_consent_url" {
   value     = jsc_entra_idp.entra_connection.consent_url
-  sensitive = true
 }
 ```
 
@@ -55,4 +53,4 @@ output "entra_consent_url" {
 
 - `id` (String) The ID of this resource.
 - `state` (String) Current state of the IdP connection. `INITIAL` until Microsoft OAuth consent is completed, then `APPROVED`.
-- `consent_url` (String, Sensitive) Microsoft OAuth consent URL. Visit this URL in a browser to complete IdP setup. Redacted from plan/apply output.
+- `consent_url` (String) Microsoft OAuth consent URL. Visit this URL in a browser to complete IdP setup.
