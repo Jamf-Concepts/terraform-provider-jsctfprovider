@@ -13,6 +13,7 @@ import (
 	pagvpnroutes "jsctfprovider/endpoints/pag_vpnroutes"
 	pagztnaapp "jsctfprovider/endpoints/pag_ztna_app"
 	ztnaapp "jsctfprovider/endpoints/ztna_app"
+	physicalaccess "jsctfprovider/endpoints/physical_access"
 	protectpreventlists "jsctfprovider/endpoints/protect_preventlists"
 	"jsctfprovider/endpoints/routes"
 	"jsctfprovider/endpoints/uemc"
@@ -118,6 +119,7 @@ func main() {
 					"jsc_pag_ztnaapp":         pagztnaapp.ResourcePAGZTNAApp(),
 					"jsc_access_policy":       ztnaapp.ResourceZTNAApp(),
 					"jsc_protect_preventlist": protectpreventlists.ResourcePreventlists(),
+					"jsc_swiftconnect":         physicalaccess.ResourceSwiftConnect(),
 				},
 				// Define the datasources
 				DataSourcesMap: map[string]*schema.Resource{
