@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -372,6 +373,22 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 
 	maxRetries := 2
 	retryDelay := 2 * time.Second
+
+	// Preserve the request body for retries (body is consumed after each attempt)
+	var bodyBytes []byte
+	if req.Body != nil {
+		var err error
+		bodyBytes, err = ioutil.ReadAll(req.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read request body: %w", err)
+		}
+		req.Body.Close()
+		req.Body = ioutil.NopCloser(bytes.NewReader(bodyBytes))
+		req.GetBody = func() (io.ReadCloser, error) {
+			return ioutil.NopCloser(bytes.NewReader(bodyBytes)), nil
+		}
+	}
+
 	log.Println("[INFO] Building the client")
 	log.Println("[INFO] incoming url is " + req.URL.Path)
 
@@ -400,6 +417,10 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 	var err error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		log.Printf("[INFO] Attempt %d/%d...\n", attempt, maxRetries)
+		// Reset the request body for retries (body is consumed after first attempt)
+		if req.GetBody != nil {
+			req.Body, _ = req.GetBody()
+		}
 		req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
 		log.Println("session cookie within loop is " + sessionCookie)
 		req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
