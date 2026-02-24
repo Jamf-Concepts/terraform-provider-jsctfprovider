@@ -76,13 +76,33 @@ func buildAdminRequest(d *schema.ResourceData) adminRequest {
 			SSO:      adminSSO{Enabled: d.Get("sso_enabled").(bool)},
 		},
 		Authorization: adminAuthorization{
-			Roles:       toStringSlice(d.Get("roles").([]interface{})),
-			Permissions: toStringSlice(d.Get("permissions").([]interface{})),
+			Roles:       toStringSlice(d.Get("roles").(*schema.Set).List()),
+			Permissions: toStringSlice(d.Get("permissions").(*schema.Set).List()),
 		},
 		NotificationSettings: adminNotificationSettings{
-			SubscribedNotificationCategories: toStringSlice(d.Get("notification_categories").([]interface{})),
+			SubscribedNotificationCategories: toStringSlice(d.Get("notification_categories").(*schema.Set).List()),
 		},
 	}
+}
+
+// suppressPermissionDiffForSuperAdmin prevents drift detection on permissions
+// when SUPER_ADMIN role is present, since the API auto-grants all permissions
+// regardless of what is sent in the request.
+func suppressPermissionDiffForSuperAdmin(k, oldValue, newValue string, d *schema.ResourceData) bool {
+	rolesSet := d.Get("roles").(*schema.Set)
+	roles := rolesSet.List()
+
+	// Check if SUPER_ADMIN is in the roles set
+	for _, role := range roles {
+		if role.(string) == "SUPER_ADMIN" {
+			// If SUPER_ADMIN role is present, suppress all permission diffs
+			// The API manages permissions automatically for this role
+			return true
+		}
+	}
+
+	// No SUPER_ADMIN role - allow normal diff detection
+	return false
 }
 
 // ResourceAdmin returns the schema.Resource for jsc_admin.
@@ -105,16 +125,17 @@ func ResourceAdmin() *schema.Resource {
 				Description: "Username (email address) for the admin account.",
 			},
 			"roles": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Required:    true,
-				Description: "Roles assigned to the admin. Known values: WRITE_ADMIN, SUPER_ADMIN, GLOBAL_ADMIN, MAGIC.",
+				Optional:    true,
+				Description: "Roles assigned to the admin. Empty set = read-only. Known elevated roles: SUPER_ADMIN, GLOBAL_ADMIN, MAGIC.",
 			},
 			"permissions": {
-				Type:        schema.TypeList,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Required:    true,
-				Description: "Permissions granted to the admin. E.g. DEVICES, ACCESS, SETTINGS, SECURITY.",
+				Type:             schema.TypeSet,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				Optional:         true,
+				DiffSuppressFunc: suppressPermissionDiffForSuperAdmin,
+				Description:      "Permissions granted to the admin. Not required if role is SUPER_ADMIN. Known values: DEVICES, ACCESS, SETTINGS, SECURITY, AUDIT_LOGS, USER_SUMMARY, CHANGE_PASSWORD_IN_RADAR.",
 			},
 			"sso_enabled": {
 				Type:        schema.TypeBool,
@@ -123,7 +144,7 @@ func ResourceAdmin() *schema.Resource {
 				Description: "Whether SSO is enabled for this admin account. Defaults to false (local auth).",
 			},
 			"notification_categories": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Optional:    true,
 				Description: "Notification categories to subscribe to. Known values: SECURITY, MOBILE_DATA, SERVICE_MANAGEMENT.",
@@ -285,10 +306,31 @@ func resourceAdminRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceAdminUpdate(d *schema.ResourceData, m interface{}) error {
-	if err := resourceAdminDelete(d, m); err != nil {
-		return err
+	adminID := d.Id()
+
+	payload, err := json.Marshal(buildAdminRequest(d))
+	if err != nil {
+		return fmt.Errorf("failed to marshal jsc_admin update payload: %v", err)
 	}
-	return resourceAdminCreate(d, m)
+
+	req, err := http.NewRequest("PUT", fmt.Sprintf("https://radar.wandera.com/gate/admin-service/v4/customers/{customerid}/admins/%s", adminID), bytes.NewBuffer(payload))
+	if err != nil {
+		return fmt.Errorf("failed to build jsc_admin update request: %v", err)
+	}
+
+	resp, err := auth.MakeRequest(req)
+	if err != nil {
+		return fmt.Errorf("jsc_admin update request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("failed to update jsc_admin: %s (response: %s)", resp.Status, string(body))
+	}
+
+	// Read back the updated state
+	return resourceAdminRead(d, m)
 }
 
 func resourceAdminDelete(d *schema.ResourceData, m interface{}) error {
