@@ -1,11 +1,11 @@
 ---
-page_title: "jsc_app Resource - jsc"
+page_title: "jsc_access_policy Resource - jsc"
 subcategory: ""
 description: |-
   Manages a ZTNA per-app routing policy in JSC via the traffic-routing-service API.
 ---
 
-# jsc_app (Resource)
+# jsc_access_policy (Resource)
 
 Manages a ZTNA per-app routing policy in JSC. Traffic to the configured hostnames or IPs is routed through JSC's network, subject to the configured security controls.
 
@@ -15,7 +15,7 @@ Used in the SwiftConnect Mini Onboarder to route traffic to SwiftConnect provisi
 
 - `jsc_ztna` targets the older `/api/app-definitions` endpoint
 - `jsc_pag_ztnaapp` targets the PAG API (`api.wandera.com/ztna/v1/apps`) using PAG JWT auth
-- `jsc_app` targets the modern gateway API (`/gate/traffic-routing-service/v1/apps`) using standard session auth — this is what the JSC UI calls today
+- `jsc_access_policy` targets the modern gateway API (`/gate/traffic-routing-service/v1/apps`) using standard session auth — this is what the JSC UI calls today
 
 ## Notes
 
@@ -27,7 +27,7 @@ Used in the SwiftConnect Mini Onboarder to route traffic to SwiftConnect provisi
 ## Example Usage
 
 ```hcl
-resource "jsc_app" "swiftconnect_access_policy" {
+resource "jsc_access_policy" "swiftconnect_access_policy" {
   name      = "SwiftConnect Provisioning"
   type      = "ENTERPRISE"
   hostnames = ["provisioning.swiftconnect.io"]

@@ -121,7 +121,7 @@ func buildZTNAAppRequest(d *schema.ResourceData) ztnaAppRequest {
 	}
 }
 
-// ResourceZTNAApp returns the schema.Resource for jsc_app.
+// ResourceZTNAApp returns the schema.Resource for jsc_access_policy.
 func ResourceZTNAApp() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceZTNAAppCreate,
@@ -237,38 +237,38 @@ func ResourceZTNAApp() *schema.Resource {
 func resourceZTNAAppCreate(d *schema.ResourceData, m interface{}) error {
 	payload, err := json.Marshal(buildZTNAAppRequest(d))
 	if err != nil {
-		return fmt.Errorf("failed to marshal jsc_app payload: %v", err)
+		return fmt.Errorf("failed to marshal jsc_access_policy payload: %v", err)
 	}
 
 	req, err := http.NewRequest("POST", "https://radar.wandera.com/gate/traffic-routing-service/v1/apps", bytes.NewBuffer(payload))
 	if err != nil {
-		return fmt.Errorf("failed to build jsc_app create request: %v", err)
+		return fmt.Errorf("failed to build jsc_access_policy create request: %v", err)
 	}
 
 	resp, err := auth.MakeRequest(req)
 	if err != nil {
-		return fmt.Errorf("jsc_app create request failed: %v", err)
+		return fmt.Errorf("jsc_access_policy create request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("failed to create jsc_app: %s", resp.Status)
+		return fmt.Errorf("failed to create jsc_access_policy: %s", resp.Status)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read jsc_app create response: %v", err)
+		return fmt.Errorf("failed to read jsc_access_policy create response: %v", err)
 	}
 
 	var response struct {
 		ID string `json:"id"`
 	}
 	if err := json.Unmarshal(body, &response); err != nil {
-		return fmt.Errorf("failed to parse jsc_app create response: %v", err)
+		return fmt.Errorf("failed to parse jsc_access_policy create response: %v", err)
 	}
 
 	if response.ID == "" {
-		return fmt.Errorf("jsc_app was created but API returned an empty ID")
+		return fmt.Errorf("jsc_access_policy was created but API returned an empty ID")
 	}
 
 	d.SetId(response.ID)
@@ -278,12 +278,12 @@ func resourceZTNAAppCreate(d *schema.ResourceData, m interface{}) error {
 func resourceZTNAAppRead(d *schema.ResourceData, m interface{}) error {
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/traffic-routing-service/v1/apps/%s", d.Id()), nil)
 	if err != nil {
-		return fmt.Errorf("failed to build jsc_app read request: %v", err)
+		return fmt.Errorf("failed to build jsc_access_policy read request: %v", err)
 	}
 
 	resp, err := auth.MakeRequest(req)
 	if err != nil {
-		return fmt.Errorf("jsc_app read request failed: %v", err)
+		return fmt.Errorf("jsc_access_policy read request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -293,17 +293,17 @@ func resourceZTNAAppRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to read jsc_app: %s", resp.Status)
+		return fmt.Errorf("failed to read jsc_access_policy: %s", resp.Status)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read jsc_app read response: %v", err)
+		return fmt.Errorf("failed to read jsc_access_policy read response: %v", err)
 	}
 
 	var response ztnaAppResponse
 	if err := json.Unmarshal(body, &response); err != nil {
-		return fmt.Errorf("failed to parse jsc_app read response: %v", err)
+		return fmt.Errorf("failed to parse jsc_access_policy read response: %v", err)
 	}
 
 	d.Set("name", response.Name)
@@ -337,17 +337,17 @@ func resourceZTNAAppUpdate(d *schema.ResourceData, m interface{}) error {
 func resourceZTNAAppDelete(d *schema.ResourceData, m interface{}) error {
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/traffic-routing-service/v1/apps/%s", d.Id()), nil)
 	if err != nil {
-		return fmt.Errorf("failed to build jsc_app delete request: %v", err)
+		return fmt.Errorf("failed to build jsc_access_policy delete request: %v", err)
 	}
 
 	resp, err := auth.MakeRequest(req)
 	if err != nil {
-		return fmt.Errorf("jsc_app delete request failed: %v", err)
+		return fmt.Errorf("jsc_access_policy delete request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("failed to delete jsc_app: %s", resp.Status)
+		return fmt.Errorf("failed to delete jsc_access_policy: %s", resp.Status)
 	}
 
 	d.SetId("")

@@ -1,5 +1,5 @@
 # Route SwiftConnect provisioning server traffic through JSC ZTNA
-resource "jsc_app" "swiftconnect_access_policy" {
+resource "jsc_access_policy" "swiftconnect_access_policy" {
   name      = "SwiftConnect Provisioning"
   type      = "ENTERPRISE"
   hostnames = ["provisioning.swiftconnect.io"]

@@ -116,7 +116,7 @@ func main() {
 					"jsc_ap":                  activationprofiles.ResourceActivationProfile(),
 					"jsc_hostnamemapping":     hostnamemapping.ResourceHostnameMapping(),
 					"jsc_pag_ztnaapp":         pagztnaapp.ResourcePAGZTNAApp(),
-					"jsc_app":                 ztnaapp.ResourceZTNAApp(),
+					"jsc_access_policy":       ztnaapp.ResourceZTNAApp(),
 					"jsc_protect_preventlist": protectpreventlists.ResourcePreventlists(),
 				},
 				// Define the datasources
