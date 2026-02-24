@@ -1,0 +1,20 @@
+# Copy this file to terraform.tfvars and fill in your actual credentials
+# terraform.tfvars is gitignored and won't be committed
+#
+# cp terraform.tfvars.example terraform.tfvars
+
+# Required: JSC credentials (only local accounts supported, no SSO/SAML)
+jsc_username   = "your-email@example.com"
+jsc_password   = "your-password"
+
+# Optional: Customer ID (leave as "empty" to auto-discover)
+jsc_customerid = "empty"
+
+# Optional: PAG resources configuration
+# jsc_applicationid     = "your-application-id"
+# jsc_applicationsecret = "your-application-secret"
+
+# Optional: Protect resources configuration
+# jsc_protectclientid       = "your-protect-client-id"
+# jsc_protectclientpassword = "your-protect-password"
+# jsc_protectdomainname     = "your-tenant.protect.jamfcloud.com"
