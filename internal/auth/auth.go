@@ -72,7 +72,7 @@ func AuthenticateProtect(domainname string, clientid string, clientpassword stri
 		log.Fatalf("Error unmarshalling JSON: %v", err)
 	}
 
-	fmt.Println("Access Token:", tokenResp.AccessToken)
+	log.Println("[INFO] Successfully obtained Protect access token")
 
 	protectAuthToken = tokenResp.AccessToken
 	protectDomainname = domainname
@@ -383,8 +383,6 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 	log.Println("new raw url is " + req.URL.Path)
 	log.Println("raw host is " + string(req.Host))
 
-	log.Println("session cookie  is " + sessionCookie)
-
 	// Send the request using the client
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
@@ -395,7 +393,6 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		log.Printf("[INFO] Attempt %d/%d...\n", attempt, maxRetries)
 		req.AddCookie(&http.Cookie{Name: "SESSION", Value: sessionCookie, Path: "/", SameSite: http.SameSiteLaxMode, Secure: true, HttpOnly: true})
-		log.Println("session cookie within loop is " + sessionCookie)
 		req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
 		resp2, err = client.Do(req)
 		if err != nil {
