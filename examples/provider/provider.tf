@@ -10,14 +10,22 @@ terraform {
 
 
 provider "jsc" {
-  # Configure provider-specific settings if needed
-  # Only local email accounts are supported. No SSO or SAML
-  username              = "example@example.com"
-  password              = "example"
-  customerid            = "993ae0ee-4bd8-4325-bc5d-1db0ea45b4f6" //optional
-  applicationid         = "pagappid"                             //for PAG resources
-  applicationsecret     = "pagappsecret"
-  protectclientid       = "protectclientid" //for Protect resources
-  protectclientpassword = "protectclientpassword"
-  protectdomainname     = "protectdomain.protect.jamfcloud.com"
+  # Configure provider authentication
+  # NOTE: Only local email accounts are supported. SSO/SAML not supported.
+  #
+  # Credentials should be provided via terraform.tfvars (see terraform.tfvars.example)
+  # or environment variables (JSC_USERNAME, JSC_PASSWORD, etc.)
+
+  username   = var.jsc_username
+  password   = var.jsc_password
+  customerid = var.jsc_customerid # Optional - set to "empty" to auto-discover
+
+  # Optional: PAG resources configuration
+  applicationid     = var.jsc_applicationid
+  applicationsecret = var.jsc_applicationsecret
+
+  # Optional: Protect resources configuration
+  protectclientid       = var.jsc_protectclientid
+  protectclientpassword = var.jsc_protectclientpassword
+  protectdomainname     = var.jsc_protectdomainname
 }
