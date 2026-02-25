@@ -135,6 +135,7 @@ func main() {
 					"jsc_groups":              groups.DataSourceGroups(),
 					"jsc_hostnamemapping":     hostnamemapping.DataSourceHostnameMapping(),
 					"jsc_protect_preventlist": protectpreventlists.DataSourcePreventlists(),
+					"jsc_idp_connection":      idp.DataSourceIdpConnection(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
