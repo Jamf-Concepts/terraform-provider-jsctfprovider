@@ -14,7 +14,7 @@ import (
 	pagapptemplates "jsctfprovider/endpoints/pag_apptemplates"
 	pagvpnroutes "jsctfprovider/endpoints/pag_vpnroutes"
 	pagztnaapp "jsctfprovider/endpoints/pag_ztna_app"
-	ztnaapp "jsctfprovider/endpoints/ztna_app"
+	physicalaccess "jsctfprovider/endpoints/physical_access"
 	physicalaccess "jsctfprovider/endpoints/physical_access"
 	protectpreventlists "jsctfprovider/endpoints/protect_preventlists"
 	"jsctfprovider/endpoints/routes"
@@ -135,6 +135,7 @@ func main() {
 					"jsc_groups":              groups.DataSourceGroups(),
 					"jsc_hostnamemapping":     hostnamemapping.DataSourceHostnameMapping(),
 					"jsc_protect_preventlist": protectpreventlists.DataSourcePreventlists(),
+					"jsc_idp_connection":      idp.DataSourceIdpConnection(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
