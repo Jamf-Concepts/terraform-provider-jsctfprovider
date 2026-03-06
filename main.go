@@ -18,6 +18,7 @@ import (
 	physicalaccess "jsctfprovider/endpoints/physical_access"
 	protectpreventlists "jsctfprovider/endpoints/protect_preventlists"
 	"jsctfprovider/endpoints/routes"
+	"jsctfprovider/endpoints/securepolicy"
 	"jsctfprovider/endpoints/uemc"
 	"jsctfprovider/endpoints/ztna"
 	"jsctfprovider/internal/auth"
@@ -124,6 +125,7 @@ func main() {
 					"jsc_access_policy":       ztnaapp.ResourceZTNAApp(),
 					"jsc_protect_preventlist": protectpreventlists.ResourcePreventlists(),
 					"jsc_swiftconnect":         physicalaccess.ResourceSwiftConnect(),
+				"jsc_secure_policy":        securepolicy.ResourceSecurePolicy(),
 				},
 				// Define the datasources
 				DataSourcesMap: map[string]*schema.Resource{
