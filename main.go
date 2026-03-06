@@ -15,7 +15,7 @@ import (
 	pagvpnroutes "jsctfprovider/endpoints/pag_vpnroutes"
 	pagztnaapp "jsctfprovider/endpoints/pag_ztna_app"
 	physicalaccess "jsctfprovider/endpoints/physical_access"
-	physicalaccess "jsctfprovider/endpoints/physical_access"
+	ztnaapp "jsctfprovider/endpoints/ztna_app"
 	protectpreventlists "jsctfprovider/endpoints/protect_preventlists"
 	"jsctfprovider/endpoints/routes"
 	"jsctfprovider/endpoints/securepolicy"
