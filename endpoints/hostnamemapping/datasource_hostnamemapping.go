@@ -39,6 +39,83 @@ func convertStringSliceToInterfaceSet(slice []string) []interface{} {
 	return result
 }
 
+// DataSourceHostnameMappings returns all hostname mappings for discovery/import.
+func DataSourceHostnameMappings() *schema.Resource {
+	return &schema.Resource{
+		ReadContext: dataSourceAllMappingsRead,
+
+		Schema: map[string]*schema.Schema{
+			"mappings": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of all hostname mappings.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"hostname": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The hostname (also used as the import ID).",
+						},
+						"securedns": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "If used with Secure DNS.",
+						},
+						"ztna": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "If used with ZTNA.",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func dataSourceAllMappingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	req, err := http.NewRequest("GET", "https://radar.wandera.com/gate/dns-zone-management-service/v1/custom-hostname-mappings", nil)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to build hostname mappings list request: %v", err))
+	}
+
+	resp, err := auth.MakeRequest(req)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("hostname mappings list request failed: %v", err))
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return diag.FromErr(fmt.Errorf("failed to list hostname mappings: %s", resp.Status))
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to read hostname mappings response: %v", err))
+	}
+
+	var response Mappings
+	if err := json.Unmarshal(body, &response); err != nil {
+		return diag.FromErr(fmt.Errorf("failed to parse hostname mappings response: %v", err))
+	}
+
+	mappingList := make([]map[string]interface{}, len(response.Mapping))
+	for i, m := range response.Mapping {
+		mappingList[i] = map[string]interface{}{
+			"hostname":  m.Hostname,
+			"securedns": m.SecureDNS,
+			"ztna":      m.ZTNA,
+		}
+	}
+
+	if err := d.Set("mappings", mappingList); err != nil {
+		return diag.FromErr(fmt.Errorf("failed to set mappings: %v", err))
+	}
+
+	d.SetId("hostname_mappings")
+	return nil
+}
+
 func DataSourceHostnameMapping() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceMappingsRead,

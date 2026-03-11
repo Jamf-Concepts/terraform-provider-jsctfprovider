@@ -114,8 +114,11 @@ func main() {
 					"jsc_pag_ztnaapp":      pagztnaapp.DataSourcePAGZTNAApp(),
 					"jsc_categories":       categories.DataSourceCategories(),
 					"jsc_groups":           groups.DataSourceGroups(),
-					"jsc_hostnamemapping":  hostnamemapping.DataSourceHostnameMapping(),
-					"jsc_idp_connection":   idp.DataSourceIdpConnection(),
+					"jsc_hostnamemapping":   hostnamemapping.DataSourceHostnameMapping(),
+					"jsc_hostnamemappings":  hostnamemapping.DataSourceHostnameMappings(),
+					"jsc_idp_connection":    idp.DataSourceIdpConnection(),
+					"jsc_entra_idps":        entraidp.DataSourceEntraIdps(),
+					"jsc_access_policies":   ztnaapp.DataSourceAccessPolicies(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
