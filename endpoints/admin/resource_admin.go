@@ -112,6 +112,9 @@ func ResourceAdmin() *schema.Resource {
 		Read:   resourceAdminRead,
 		Update: resourceAdminUpdate,
 		Delete: resourceAdminDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {

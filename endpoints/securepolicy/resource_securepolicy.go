@@ -58,6 +58,9 @@ func ResourceSecurePolicy() *schema.Resource {
 		Read:   resourceSecurePolicyRead,
 		Update: resourceSecurePolicyUpdate,
 		Delete: resourceSecurePolicyDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 
 		Schema: map[string]*schema.Schema{
 			// Each exposed override follows the pattern:

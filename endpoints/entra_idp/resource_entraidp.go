@@ -31,6 +31,9 @@ func ResourceEntraIdp() *schema.Resource {
 		Read:   resourceEntraIdpRead,
 		Update: resourceEntraIdpUpdate,
 		Delete: resourceEntraIdpDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {

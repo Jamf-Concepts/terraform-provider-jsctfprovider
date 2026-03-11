@@ -43,6 +43,9 @@ func ResourcePAGZTNAApp() *schema.Resource {
 		Update:        resourcePAGZTNAAppUpdate,
 		Delete:        resourcePAGZTNAAppDelete,
 		CustomizeDiff: validatePAGZTNADataFields,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {

@@ -19,6 +19,9 @@ func ResourceSwiftConnect() *schema.Resource {
 		Read:   resourceSwiftConnectRead,
 		Update: resourceSwiftConnectUpdate,
 		Delete: resourceSwiftConnectDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"base_url": {
