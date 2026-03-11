@@ -49,3 +49,4 @@ terraform.rc
 /.scannerwork
 tflint-report.json
 tfsec-report.json
+test-import/
