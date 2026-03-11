@@ -517,6 +517,9 @@ func ResourceActivationProfile() *schema.Resource {
 		Read:   resourceAPRead,
 		Update: resourceAPUpdate,
 		Delete: resourceAPDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 
 		// Define the attributes of the okta resource
 		Schema: map[string]*schema.Schema{
@@ -666,6 +669,33 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 
 }
 
+// apReadResponse represents the API response when reading an activation profile
+type apReadResponse struct {
+	Code string `json:"code"`
+	Name string `json:"name"`
+	Idp  struct {
+		Type         string `json:"type"`
+		ConnectionId string `json:"connectionId"`
+	} `json:"idp"`
+	Capabilities struct {
+		PrivateAccess struct {
+			Enabled bool `json:"enabled"`
+		} `json:"privateAccess"`
+		ThreatDefence struct {
+			Enabled bool `json:"enabled"`
+		} `json:"threatDefence"`
+		NetworkSecurity struct {
+			Enabled bool `json:"enabled"`
+		} `json:"networkSecurity"`
+		DataPolicy struct {
+			Enabled bool `json:"enabled"`
+		} `json:"dataPolicy"`
+		NetworkRelay struct {
+			Enabled bool `json:"enabled"`
+		} `json:"networkRelay"`
+	} `json:"capabilities"`
+}
+
 // Define the read function for the AP resource
 func resourceAPRead(d *schema.ResourceData, m interface{}) error {
 	// Make a GET request to read the details of an existing AP
@@ -682,8 +712,12 @@ func resourceAPRead(d *schema.ResourceData, m interface{}) error {
 	defer resp.Body.Close()
 
 	// Check the response status code
+	if resp.StatusCode == http.StatusNotFound {
+		d.SetId("")
+		return nil
+	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to read AP info info: %s", resp.Status)
+		return fmt.Errorf("failed to read AP info: %s", resp.Status)
 	}
 
 	// Read the response body
@@ -692,9 +726,40 @@ func resourceAPRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
+	// Parse the response JSON
+	var response apReadResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		return fmt.Errorf("failed to parse AP response: %v", err)
+	}
+
+	// Set name
+	d.Set("name", response.Name)
+
+	// Determine idptype from response
+	if response.Capabilities.NetworkRelay.Enabled {
+		d.Set("idptype", "NetworkRelay")
+		d.Set("oktaconnectionid", "")
+	} else if response.Idp.Type == "OKTA" {
+		d.Set("idptype", "Okta")
+		d.Set("oktaconnectionid", response.Idp.ConnectionId)
+	} else {
+		d.Set("idptype", "None")
+		d.Set("oktaconnectionid", "")
+	}
+
+	// Set capabilities
+	d.Set("privateaccess", response.Capabilities.PrivateAccess.Enabled)
+	d.Set("threatdefence", response.Capabilities.ThreatDefence.Enabled || response.Capabilities.NetworkSecurity.Enabled)
+	d.Set("datapolicy", response.Capabilities.DataPolicy.Enabled)
+
+	// Set computed plist/appconfig values
+	d.Set("supervisedappconfig", getAPSupervisedManagedAppConfig(d.Id()))
+	d.Set("supervisedplist", getAPSupervisedPlist(d.Id()))
+	d.Set("unsupervisedappconfig", getAPUnSupervisedManagedAppConfig(d.Id()))
+	d.Set("unsupervisedplist", getAPUnSupervisedPlist(d.Id()))
+	d.Set("byodappconfig", getAPBYODManagedAppConfig(d.Id()))
+	d.Set("byodplist", getAPBYODPlist(d.Id()))
+	d.Set("macosplist", getAPmacOSPlist(d.Id()))
 
 	return nil
 }
