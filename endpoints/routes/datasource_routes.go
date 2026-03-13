@@ -17,42 +17,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// define type of route - don't use much but nice to keep for future use
-type Deployment struct {
-	ID            string `json:"id"`
-	RouteID       string `json:"routeId"`
-	Datacenter    string `json:"datacenter"`
-	Enabled       bool   `json:"enabled"`
-	InfraSpecHash string `json:"infraSpecHash"`
-	Components    struct {
-		VpnRouter struct {
-			Deployment struct {
-				PublicNodes struct {
-					Enabled bool `json:"enabled"`
-				} `json:"deployment"`
-			} `json:"vpnRouter"`
-		} `json:"vpnRouter"`
-		VpnLoadBalancer struct {
-			Deployment []interface{} `json:"deployment"`
-		} `json:"vpnLoadBalancer"`
-	} `json:"components"`
-	Status struct {
-		ID            string `json:"id"`
-		RouteID       string `json:"routeId"`
-		Datacenter    string `json:"datacenter"`
-		Status        string `json:"status"`
-		InfraStatus   string `json:"infraStatus"`
-		InfraSpecHash string `json:"infraSpecHash"`
-		TimestampInMs int64  `json:"timestampInMs"`
-	} `json:"status"`
-	CreatedAtInMs int64 `json:"createdAtInMs"`
-	UpdatedAtInMs int64 `json:"updatedAtInMs"`
-}
-type IP struct {
-	ID          string       `json:"id"`
-	Name        string       `json:"name"`
-	Shared      bool         `json:"shared"`
-	Deployments []Deployment `json:"deployments"`
+// Route represents a VPN route from the API
+type Route struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Shared      bool   `json:"shared"`
+	Deployments []struct {
+		Datacenter string `json:"datacenter"`
+	} `json:"deployments"`
 }
 
 func DataSourceRoutes() *schema.Resource {
@@ -86,53 +58,49 @@ func DataSourceRoutes() *schema.Resource {
 
 // Define the read function for routes
 func dataSourceRoutesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	//routeName := d.Get("name").(string)
-
-	d.Set("routeid", "aaZZ")
-
-	req, err := http.NewRequest("GET", ("https://radar.wandera.com/api/gateways/vpn-routes?view=deployments_with_status&"), nil)
+	req, err := http.NewRequest("GET", "https://radar.wandera.com/gate/traffic-routing-service/v2/vpn-routes?view=deployments_with_status", nil)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error converting making http request body"))
+		return diag.FromErr(fmt.Errorf("failed to create HTTP request: %v", err))
 	}
-	resp, err := auth.MakeRequest((req))
 
+	resp, err := auth.MakeRequest(req)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to execute request: %v", err))
 	}
 	defer resp.Body.Close()
 
-	// Check the response status code
-	if resp.StatusCode != http.StatusOK {
-		return diag.FromErr(fmt.Errorf("failed to read routes info: %s", resp.Status))
-	}
-
-	// Read the response body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error making parsing body response"))
+		return diag.FromErr(fmt.Errorf("failed to read response body: %v", err))
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
-	// Parse the response JSON
-
-	var response []IP
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return diag.FromErr(err)
+	if resp.StatusCode != http.StatusOK {
+		return diag.FromErr(fmt.Errorf("failed to read routes info: %s - %s", resp.Status, string(body)))
 	}
 
-	// Find id from the first instance where name contains "the provided name"
+	var routes []Route
+	if err := json.Unmarshal(body, &routes); err != nil {
+		return diag.FromErr(fmt.Errorf("failed to parse response: %v", err))
+	}
 
-	for _, ip := range response {
-		if strings.Contains(ip.Name, d.Get("name").(string)) {
-			d.SetId(ip.ID)
-			d.Set("shared", ip.Shared)
-			d.Set("name", ip.Name)
-			d.Set("datacenter", ip.Deployments[0].Datacenter)
+	routeName := d.Get("name").(string)
+	found := false
+
+	for _, route := range routes {
+		if strings.Contains(route.Name, routeName) {
+			d.SetId(route.ID)
+			d.Set("shared", route.Shared)
+			d.Set("name", route.Name)
+			if len(route.Deployments) > 0 {
+				d.Set("datacenter", route.Deployments[0].Datacenter)
+			}
+			found = true
 			break
 		}
+	}
+
+	if !found {
+		return diag.FromErr(fmt.Errorf("no route found matching name: %s", routeName))
 	}
 
 	return nil
