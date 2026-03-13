@@ -21,6 +21,9 @@ func ResourceHostnameMapping() *schema.Resource {
 		Read:   resourceHostnameMappingRead,
 		Update: resourceHostnameMappingUpdate,
 		Delete: resourceHostnameMappingDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 
 		// Define the attributes of the okta resource
 		Schema: map[string]*schema.Schema{

@@ -15,10 +15,9 @@ import (
 	pagvpnroutes "jsctfprovider/endpoints/pag_vpnroutes"
 	pagztnaapp "jsctfprovider/endpoints/pag_ztna_app"
 	physicalaccess "jsctfprovider/endpoints/physical_access"
-	ztnaapp "jsctfprovider/endpoints/ztna_app"
-	protectpreventlists "jsctfprovider/endpoints/protect_preventlists"
 	"jsctfprovider/endpoints/routes"
 	"jsctfprovider/endpoints/securepolicy"
+	ztnaapp "jsctfprovider/endpoints/ztna_app"
 	"jsctfprovider/endpoints/uemc"
 	"jsctfprovider/endpoints/ztna"
 	"jsctfprovider/internal/auth"
@@ -40,15 +39,12 @@ import (
 //go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name jsc
 
 var (
-	DomainName            string
-	Username              string
-	Password              string
-	Customerid            string
-	Applicationid         string
-	Applicationsecret     string
-	Protectdomainname     string
-	Protectclientid       string
-	Protectclientpassword string
+	DomainName        string
+	Username          string
+	Password          string
+	Customerid        string
+	Applicationid     string
+	Applicationsecret string
 )
 
 func main() {
@@ -94,38 +90,21 @@ func main() {
 						Sensitive:   true,
 						Description: "The optional applicationsecret. Required for PAG resource types.",
 					},
-					"protectdomainname": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Your Jamf Protect endpoint is your Jamf Protect tenant",
-					},
-					"protectclientid": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "The Protect clientID created for authentication.",
-					},
-					"protectclientpassword": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Sensitive:   true,
-						Description: "The Protect client password (sic) used for authentication.",
-					},
 				},
 				// Define the resources that this provider manages
 				ResourcesMap: map[string]*schema.Resource{
-					"jsc_admin":              admin.ResourceAdmin(),
-					"jsc_oktaidp":             idp.ResourceOktaIdp(),
-					"jsc_entra_idp":           entraidp.ResourceEntraIdp(),
-					"jsc_uemc":                uemc.ResourceUEMC(),
-					"jsc_blockpage":           blockpages.ResourceBlockPage(),
-					"jsc_ztna":                ztna.Resourceztna(),
-					"jsc_ap":                  activationprofiles.ResourceActivationProfile(),
-					"jsc_hostnamemapping":     hostnamemapping.ResourceHostnameMapping(),
-					"jsc_pag_ztnaapp":         pagztnaapp.ResourcePAGZTNAApp(),
-					"jsc_access_policy":       ztnaapp.ResourceZTNAApp(),
-					"jsc_protect_preventlist": protectpreventlists.ResourcePreventlists(),
-					"jsc_swiftconnect":         physicalaccess.ResourceSwiftConnect(),
-				"jsc_secure_policy":        securepolicy.ResourceSecurePolicy(),
+					"jsc_admin":           admin.ResourceAdmin(),
+					"jsc_oktaidp":         idp.ResourceOktaIdp(),
+					"jsc_entra_idp":       entraidp.ResourceEntraIdp(),
+					"jsc_uemc":            uemc.ResourceUEMC(),
+					"jsc_blockpage":       blockpages.ResourceBlockPage(),
+					"jsc_ztna":            ztna.Resourceztna(),
+					"jsc_ap":              activationprofiles.ResourceActivationProfile(),
+					"jsc_hostnamemapping": hostnamemapping.ResourceHostnameMapping(),
+					"jsc_pag_ztnaapp":     pagztnaapp.ResourcePAGZTNAApp(),
+					"jsc_access_policy":   ztnaapp.ResourceZTNAApp(),
+					"jsc_swiftconnect":    physicalaccess.ResourceSwiftConnect(),
+					"jsc_secure_policy":   securepolicy.ResourceSecurePolicy(),
 				},
 				// Define the datasources
 				DataSourcesMap: map[string]*schema.Resource{
@@ -136,8 +115,11 @@ func main() {
 					"jsc_categories":          categories.DataSourceCategories(),
 					"jsc_groups":              groups.DataSourceGroups(),
 					"jsc_hostnamemapping":     hostnamemapping.DataSourceHostnameMapping(),
-					"jsc_protect_preventlist": protectpreventlists.DataSourcePreventlists(),
+					"jsc_hostnamemappings":    hostnamemapping.DataSourceHostnameMappings(),
 					"jsc_idp_connection":      idp.DataSourceIdpConnection(),
+					"jsc_entra_idps":          entraidp.DataSourceEntraIdps(),
+					"jsc_access_policies":     ztnaapp.DataSourceAccessPolicies(),
+					"jsc_activation_profiles": activationprofiles.DataSourceActivationProfiles(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
@@ -162,9 +144,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	Customerid = d.Get("customerid").(string)
 	Applicationid = d.Get("applicationid").(string)
 	Applicationsecret = d.Get("applicationsecret").(string)
-	Protectdomainname = d.Get("protectdomainname").(string)
-	Protectclientid = d.Get("protectclientid").(string)
-	Protectclientpassword = d.Get("protectclientpassword").(string)
 
 	if Username != "" { //prep work for other auth methods
 		err := auth.AuthenticateRadarAPI(DomainName, Username, Password, Customerid)
@@ -174,13 +153,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 	if Applicationid != "" { //do we have the PAG auth model?
 		err := auth.AuthenticatePAG(Applicationid, Applicationsecret)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if Protectclientid != "" { //do we have the Protect auth model?
-		err := auth.AuthenticateProtect(Protectdomainname, Protectclientid, Protectclientpassword)
 		if err != nil {
 			return nil, err
 		}

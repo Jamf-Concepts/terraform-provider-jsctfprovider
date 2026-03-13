@@ -128,6 +128,9 @@ func ResourceZTNAApp() *schema.Resource {
 		Read:   resourceZTNAAppRead,
 		Update: resourceZTNAAppUpdate,
 		Delete: resourceZTNAAppDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
