@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// Define the schema for the blockpage resource - only datablock rn
+// Define the schema for the ZTNA resource
 func Resourceztna() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceztnaCreate,
@@ -21,7 +21,6 @@ func Resourceztna() *schema.Resource {
 		Update: resourceztnaUpdate,
 		Delete: resourceztnaDelete,
 
-		// Define the attributes of the okta resource
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -45,24 +44,21 @@ func Resourceztna() *schema.Resource {
 				Required:    true,
 				Description: "Hostnames that this ZTNA Access Policy will capture.",
 			},
-			// Add more attributes as needed
 		},
 	}
 }
 
-// Define the create function for the UEMC resource
+// Define the create function for the ZTNA resource
 func resourceztnaCreate(d *schema.ResourceData, m interface{}) error {
-
 	hostnames := d.Get("hostnames").([]interface{})
-	// Convert hostnames from []interface{} to []string
 	var hostnamesStrings []string
 	for _, h := range hostnames {
 		hostnamesStrings = append(hostnamesStrings, h.(string))
 	}
 
 	app := map[string]interface{}{
-		"type":         d.Get("type").(string),
 		"name":         d.Get("name").(string),
+		"type":         d.Get("type").(string),
 		"categoryName": "Uncategorized",
 		"hostnames":    hostnamesStrings,
 		"bareIps":      []string{},
@@ -70,6 +66,9 @@ func resourceztnaCreate(d *schema.ResourceData, m interface{}) error {
 			"type":                "CUSTOM",
 			"routeId":             d.Get("routeid").(string),
 			"dnsIpResolutionType": "IPv6",
+		},
+		"groupOverrides": map[string]interface{}{
+			"routingOverrides": []interface{}{},
 		},
 		"assignments": map[string]interface{}{
 			"inclusions": map[string]interface{}{
@@ -96,124 +95,185 @@ func resourceztnaCreate(d *schema.ResourceData, m interface{}) error {
 
 	payload, err := json.Marshal(app)
 	if err != nil {
-		return fmt.Errorf("an error occurred: %s", "marshalling")
+		return fmt.Errorf("failed to marshal ZTNA app payload: %v", err)
 	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("https://radar.wandera.com/api/app-definitions?appName=%s&", d.Get("name").(string)), bytes.NewBuffer(payload))
-	if err != nil {
-		return fmt.Errorf("an error occurred: %s", "additional information2")
-	}
-	resp, err := auth.MakeRequest((req))
 
+	req, err := http.NewRequest("POST", "https://radar.wandera.com/gate/traffic-routing-service/v1/apps", bytes.NewBuffer(payload))
 	if err != nil {
-		return fmt.Errorf("an error occurred: %s", "additional information3")
+		return fmt.Errorf("failed to create HTTP request: %v", err)
+	}
+
+	resp, err := auth.MakeRequest(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute request: %v", err)
 	}
 	defer resp.Body.Close()
-	// Check the response status code
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != 204 {
-		return fmt.Errorf("failed to create ztnaapp page : %s", resp.Status+" "+string(payload))
-	}
 
-	// Read the response body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("an error occurred: %s", "additional information4")
+		return fmt.Errorf("failed to read response body: %v", err)
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
+	if resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("failed to create ZTNA app: %s - %s", resp.Status, string(body))
+	}
 
-	// Parse the response JSON
 	var response struct {
 		ID string `json:"id"`
 	}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return err
+	if err := json.Unmarshal(body, &response); err != nil {
+		return fmt.Errorf("failed to parse response: %v", err)
 	}
 
-	// Set the resource ID
 	d.SetId(response.ID)
-	d.Set("appname", d.Get("name").(string))
 
 	return nil
 }
 
 // Define the read function for the ZTNA resource
 func resourceztnaRead(d *schema.ResourceData, m interface{}) error {
-	// Make a GET request to read the details of an existing ZTNA app
-
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/api/app-definitions/%s?appName=&", d.Id()), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/gate/traffic-routing-service/v1/apps/%s", d.Id()), nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create HTTP request: %v", err)
 	}
-	resp, err := auth.MakeRequest((req))
 
+	resp, err := auth.MakeRequest(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to execute request: %v", err)
 	}
 	defer resp.Body.Close()
 
-	// Check the response status code
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		d.SetId("")
+		return nil
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to read ztna info: %s", resp.Status)
+		return fmt.Errorf("failed to read ZTNA app: %s - %s", resp.Status, string(body))
 	}
 
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
+	var app struct {
+		ID        string   `json:"id"`
+		Name      string   `json:"name"`
+		Type      string   `json:"type"`
+		Hostnames []string `json:"hostnames"`
+		Routing   struct {
+			RouteID string `json:"routeId"`
+		} `json:"routing"`
+	}
+	if err := json.Unmarshal(body, &app); err != nil {
+		return fmt.Errorf("failed to parse response: %v", err)
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
+	d.Set("name", app.Name)
+	d.Set("type", app.Type)
+	d.Set("hostnames", app.Hostnames)
+	d.Set("routeid", app.Routing.RouteID)
 
 	return nil
 }
 
-// Define the update function for the ZTNA - needs to be replace completely
+// Define the update function for the ZTNA resource
 func resourceztnaUpdate(d *schema.ResourceData, m interface{}) error {
-	d.Set("requires_replace", true)
-	resourceztnaDelete(d, m)
-	resourceztnaCreate(d, m)
-
-	return nil
-}
-
-// Define the delete function for the ZTNA page
-func resourceztnaDelete(d *schema.ResourceData, m interface{}) error {
-	// Retrieve the value of the "name" attribute from the resource configuration
-
-	name := d.Get("name").(string)
-
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/api/app-definitions/%s?appName=%s&", d.Id(), name), nil)
-	if err != nil {
-		return err
+	hostnames := d.Get("hostnames").([]interface{})
+	var hostnamesStrings []string
+	for _, h := range hostnames {
+		hostnamesStrings = append(hostnamesStrings, h.(string))
 	}
-	resp, err := auth.MakeRequest((req))
 
+	app := map[string]interface{}{
+		"id":           d.Id(),
+		"name":         d.Get("name").(string),
+		"type":         d.Get("type").(string),
+		"categoryName": "Uncategorized",
+		"hostnames":    hostnamesStrings,
+		"bareIps":      []string{},
+		"routing": map[string]interface{}{
+			"type":                "CUSTOM",
+			"routeId":             d.Get("routeid").(string),
+			"dnsIpResolutionType": "IPv6",
+		},
+		"groupOverrides": map[string]interface{}{
+			"routingOverrides": []interface{}{},
+		},
+		"assignments": map[string]interface{}{
+			"inclusions": map[string]interface{}{
+				"allUsers": true,
+				"groups":   []interface{}{},
+			},
+		},
+		"security": map[string]interface{}{
+			"riskControls": map[string]interface{}{
+				"enabled":              false,
+				"levelThreshold":       "HIGH",
+				"notificationsEnabled": true,
+			},
+			"dohIntegration": map[string]interface{}{
+				"blocking":             false,
+				"notificationsEnabled": true,
+			},
+			"deviceManagementBasedAccess": map[string]interface{}{
+				"enabled":              false,
+				"notificationsEnabled": true,
+			},
+		},
+	}
+
+	payload, err := json.Marshal(app)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal ZTNA app payload: %v", err)
+	}
+
+	req, err := http.NewRequest("PUT", fmt.Sprintf("https://radar.wandera.com/gate/traffic-routing-service/v1/apps/%s", d.Id()), bytes.NewBuffer(payload))
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %v", err)
+	}
+
+	resp, err := auth.MakeRequest(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute request: %v", err)
 	}
 	defer resp.Body.Close()
 
-	// Check the response status code
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != 204 {
-		return fmt.Errorf("failed to delete ztna app : %s", resp.Status+" ")
-	}
-
-	// Read the response body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read response body: %v", err)
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to update ZTNA app: %s - %s", resp.Status, string(body))
+	}
 
-	// Clear the resource ID
+	return resourceztnaRead(d, m)
+}
+
+// Define the delete function for the ZTNA resource
+func resourceztnaDelete(d *schema.ResourceData, m interface{}) error {
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("https://radar.wandera.com/gate/traffic-routing-service/v1/apps/%s", d.Id()), nil)
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %v", err)
+	}
+
+	resp, err := auth.MakeRequest(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("failed to delete ZTNA app: %s - %s", resp.Status, string(body))
+	}
+
 	d.SetId("")
 
 	return nil
