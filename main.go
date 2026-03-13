@@ -14,10 +14,11 @@ import (
 	pagapptemplates "jsctfprovider/endpoints/pag_apptemplates"
 	pagvpnroutes "jsctfprovider/endpoints/pag_vpnroutes"
 	pagztnaapp "jsctfprovider/endpoints/pag_ztna_app"
-	ztnaapp "jsctfprovider/endpoints/ztna_app"
 	physicalaccess "jsctfprovider/endpoints/physical_access"
+	ztnaapp "jsctfprovider/endpoints/ztna_app"
 	protectpreventlists "jsctfprovider/endpoints/protect_preventlists"
 	"jsctfprovider/endpoints/routes"
+	"jsctfprovider/endpoints/securepolicy"
 	"jsctfprovider/endpoints/uemc"
 	"jsctfprovider/endpoints/ztna"
 	"jsctfprovider/internal/auth"
@@ -124,6 +125,7 @@ func main() {
 					"jsc_access_policy":       ztnaapp.ResourceZTNAApp(),
 					"jsc_protect_preventlist": protectpreventlists.ResourcePreventlists(),
 					"jsc_swiftconnect":         physicalaccess.ResourceSwiftConnect(),
+				"jsc_secure_policy":        securepolicy.ResourceSecurePolicy(),
 				},
 				// Define the datasources
 				DataSourcesMap: map[string]*schema.Resource{
@@ -135,6 +137,7 @@ func main() {
 					"jsc_groups":              groups.DataSourceGroups(),
 					"jsc_hostnamemapping":     hostnamemapping.DataSourceHostnameMapping(),
 					"jsc_protect_preventlist": protectpreventlists.DataSourcePreventlists(),
+					"jsc_idp_connection":      idp.DataSourceIdpConnection(),
 				},
 				ConfigureFunc: providerConfigure,
 			}
