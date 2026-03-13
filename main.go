@@ -7,6 +7,7 @@ import (
 	"jsctfprovider/endpoints/activationprofiles"
 	"jsctfprovider/endpoints/blockpages"
 	entraidp "jsctfprovider/endpoints/entra_idp"
+	googleidp "jsctfprovider/endpoints/google_idp"
 	"jsctfprovider/endpoints/categories"
 	"jsctfprovider/endpoints/groups"
 	"jsctfprovider/endpoints/hostnamemapping"
@@ -116,6 +117,7 @@ func main() {
 					"jsc_admin":              admin.ResourceAdmin(),
 					"jsc_oktaidp":             idp.ResourceOktaIdp(),
 					"jsc_entra_idp":           entraidp.ResourceEntraIdp(),
+					"jsc_google_idp":          googleidp.ResourceGoogleIdp(),
 					"jsc_uemc":                uemc.ResourceUEMC(),
 					"jsc_blockpage":           blockpages.ResourceBlockPage(),
 					"jsc_ztna":                ztna.Resourceztna(),
