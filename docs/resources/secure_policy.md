@@ -17,14 +17,20 @@ The secure policy controls how JSC evaluates device risk based on detected threa
 - Create and Update both issue a `GET` to fetch the full 49-category policy body, apply the configured severity overrides, then `PUT` the modified payload back. All unmanaged threat categories are preserved exactly as received.
 - Delete restores managed overrides to their tenant defaults (e.g. `OS_OUTDATED_OS_LOW` reverts to `MEDIUM`).
 - The resource ID is always `secure_policy` (a fixed string) since there is no per-resource ID in the API.
+- Categories with inheritance set to "inherit" in the JSC portal will accept severity changes via API but the inherited value takes precedence. Set inheritance to "override" in the portal first.
+- Desktop-only categories (`device_antivirus_disabled`, `device_firewall_disabled`) may not persist on instances without Windows/macOS devices.
 
 ## Example Usage
 
 ```hcl
 resource "jsc_secure_policy" "posture" {
-  # Raise OS_OUTDATED_OS_LOW (Vulnerable OS - Minor / N-1) from MEDIUM to HIGH
-  # so that N-1 OS devices fail the SwiftConnect posture gate.
-  os_outdated_os_low_severity = "HIGH"
+  # Override selected threat category severities from their tenant defaults.
+  # For example, raise OS_OUTDATED_OS_LOW (Vulnerable OS - Minor / N-1) from
+  # MEDIUM to HIGH so that N-1 OS devices fail the SwiftConnect posture gate.
+  os_outdated_os_low_severity   = "HIGH"
+  access_phishing_host_severity = "HIGHEST"
+  access_bad_host_severity      = "HIGH"
+  os_jailbreak_severity         = "HIGHEST"
 }
 ```
 
@@ -33,7 +39,72 @@ resource "jsc_secure_policy" "posture" {
 
 ### Optional
 
-- `os_outdated_os_low_severity` (String) Severity override for the `OS_OUTDATED_OS_LOW` threat category (Vulnerable OS - Minor). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `INFO`. Defaults to `MEDIUM` (tenant default).
+#### Web Threat Prevention
+
+- `access_phishing_host_severity` (String) Severity override for the `ACCESS_PHISHING_HOST` threat category (Phishing). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `app_leak_credit_card_severity` (String) Severity override for the `APP_LEAK_CREDIT_CARD` threat category (App Data Leak: Credit Card). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGH` (tenant default).
+- `app_leak_password_severity` (String) Severity override for the `APP_LEAK_PASSWORD` threat category (App Data Leak: Password). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `app_leak_email_severity` (String) Severity override for the `APP_LEAK_EMAIL` threat category (App Data Leak: Email). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `app_leak_userid_severity` (String) Severity override for the `APP_LEAK_USERID` threat category (App Data Leak: User Identity). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `app_leak_location_severity` (String) Severity override for the `APP_LEAK_LOCATION` threat category (App Data Leak: Location). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `resource_leak_credit_card_severity` (String) Severity override for the `RESOURCE_LEAK_CREDIT_CARD` threat category (Web Data Leak: Credit Card). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGH` (tenant default).
+- `resource_leak_password_severity` (String) Severity override for the `RESOURCE_LEAK_PASSWORD` threat category (Web Data Leak: Password). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `resource_leak_email_severity` (String) Severity override for the `RESOURCE_LEAK_EMAIL` threat category (Web Data Leak: Email). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `resource_leak_userid_severity` (String) Severity override for the `RESOURCE_LEAK_USERID` threat category (Web Data Leak: User Identity). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `resource_leak_location_severity` (String) Severity override for the `RESOURCE_LEAK_LOCATION` threat category (Web Data Leak: Location). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `access_bad_host_severity` (String) Severity override for the `ACCESS_BAD_HOST` threat category (Malware Network Traffic). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGH` (tenant default).
+- `access_cryptojacking_host_severity` (String) Severity override for the `ACCESS_CRYPTOJACKING_HOST` threat category (Cryptojacking). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `access_spam_host_severity` (String) Severity override for the `ACCESS_SPAM_HOST` threat category (Spam). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `risky_app_download_severity` (String) Severity override for the `RISKY_APP_DOWNLOAD` threat category (Third Party App Store Traffic). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+
+#### Endpoint > App > Malware
+
+- `app_malicious_app_in_inventory_severity` (String) Severity override for the `APP_MALICIOUS_APP_IN_INVENTORY` threat category (Generic Malware). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `app_spyware_app_in_inventory_severity` (String) Severity override for the `APP_SPYWARE_APP_IN_INVENTORY` threat category (Spyware). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `app_trojan_malware_app_in_inventory_severity` (String) Severity override for the `APP_TROJAN_MALWARE_APP_IN_INVENTORY` threat category (Trojan). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `app_ransomware_app_in_inventory_severity` (String) Severity override for the `APP_RANSOMWARE_APP_IN_INVENTORY` threat category (Ransomware). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `app_banker_malware_app_in_inventory_severity` (String) Severity override for the `APP_BANKER_MALWARE_APP_IN_INVENTORY` threat category (Banker). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `app_sms_malware_app_in_inventory_severity` (String) Severity override for the `APP_SMS_MALWARE_APP_IN_INVENTORY` threat category (SMS Malware). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `app_adware_app_in_inventory_severity` (String) Severity override for the `APP_ADWARE_APP_IN_INVENTORY` threat category (Adware). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `app_rooting_malware_app_in_inventory_severity` (String) Severity override for the `APP_ROOTING_MALWARE_APP_IN_INVENTORY` threat category (Rooting Malware). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `app_potentially_unwanted_app_in_inventory_severity` (String) Severity override for the `APP_POTENTIALLY_UNWANTED_APP_IN_INVENTORY` threat category (Potentially Unwanted Application). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+
+#### Endpoint > App
+
+- `app_admin_app_in_inventory_severity` (String) Severity override for the `APP_ADMIN_APP_IN_INVENTORY` threat category (Device Admin App Installed). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `app_side_loaded_app_in_inventory_severity` (String) Severity override for the `APP_SIDE_LOADED_APP_IN_INVENTORY` threat category (Sideloaded App Installed). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `app_third_party_app_stores_in_inventory_severity` (String) Severity override for the `APP_THIRD_PARTY_APP_STORES_IN_INVENTORY` threat category (Third Party App Stores Installed). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `app_vulnerable_app_in_inventory_severity` (String) Severity override for the `APP_VULNERABLE_APP_IN_INVENTORY` threat category (Vulnerable App Installed). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+
+#### Endpoint > Network
+
+- `certificate_ssl_trust_compromise_severity` (String) Severity override for the `CERTIFICATE_SSL_TRUST_COMPROMISE` threat category (Dangerous Certificate). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `network_access_point_ssl_mitm_trusted_valid_cert_severity` (String) Severity override for the `NETWORK_ACCESS_POINT_SSL_MITM_TRUSTED_VALID_CERT` threat category (Man-in-the-Middle (Compromised Trust Store)). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `network_access_point_ssl_mitm_untrusted_valid_cert_severity` (String) Severity override for the `NETWORK_ACCESS_POINT_SSL_MITM_UNTRUSTED_VALID_CERT` threat category (Man-in-the-Middle (Targeted Certificate Spoof)). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGH` (tenant default).
+- `network_access_point_ssl_strip_mitm_severity` (String) Severity override for the `NETWORK_ACCESS_POINT_SSL_STRIP_MITM` threat category (Man-in-the-Middle (SSL Strip)). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `risky_hotspot_severity` (String) Severity override for the `RISKY_HOTSPOT` threat category (Risky Hotspots). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+
+#### Endpoint > Device
+
+- `os_jailbreak_severity` (String) Severity override for the `OS_JAILBREAK` threat category (Jailbreak). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGHEST` (tenant default).
+- `os_outdated_os_severity` (String) Severity override for the `OS_OUTDATED_OS` threat category (Vulnerable OS (Major)). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `HIGH` (tenant default).
+- `os_outdated_os_low_severity` (String) Severity override for the `OS_OUTDATED_OS_LOW` threat category (Vulnerable OS (Minor)). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `os_out_of_date_os_severity` (String) Severity override for the `OS_OUT_OF_DATE_OS` threat category (Out-of-Date OS). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `device_app_inactivity_severity` (String) Severity override for the `DEVICE_APP_INACTIVITY` threat category (App Inactivity). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `device_storage_encryption_disabled_severity` (String) Severity override for the `DEVICE_STORAGE_ENCRYPTION_DISABLED` threat category (Device Encryption Disabled). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `device_lock_screen_disabled_severity` (String) Severity override for the `DEVICE_LOCK_SCREEN_DISABLED` threat category (Lock Screen Disabled). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `ios_profile_severity` (String) Severity override for the `IOS_PROFILE` threat category (Risky iOS Profile). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `device_missing_android_security_patches_severity` (String) Severity override for the `DEVICE_MISSING_ANDROID_SECURITY_PATCHES` threat category (Android Security Patches Missing). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `device_unknown_sources_enabled_severity` (String) Severity override for the `DEVICE_UNKNOWN_SOURCES_ENABLED` threat category (Unknown Sources Enabled). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `device_usb_app_verification_disabled_severity` (String) Severity override for the `DEVICE_USB_APP_VERIFICATION_DISABLED` threat category (USB App Verification Disabled). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `device_user_password_disabled_severity` (String) Severity override for the `DEVICE_USER_PASSWORD_DISABLED` threat category (User Password Disabled). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOW` (tenant default).
+- `device_developer_mode_enabled_severity` (String) Severity override for the `DEVICE_DEVELOPER_MODE_ENABLED` threat category (Developer Mode Enabled). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOWEST` (tenant default).
+- `device_usb_debugging_enabled_severity` (String) Severity override for the `DEVICE_USB_DEBUGGING_ENABLED` threat category (USB Debugging Enabled). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `LOWEST` (tenant default).
+
+#### Desktop
+
+- `device_antivirus_disabled_severity` (String) Severity override for the `DEVICE_ANTIVIRUS_DISABLED` threat category (Antivirus Disabled). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
+- `device_firewall_disabled_severity` (String) Severity override for the `DEVICE_FIREWALL_DISABLED` threat category (Firewall Disabled). Valid values: `HIGHEST`, `HIGH`, `MEDIUM`, `LOW`, `LOWEST`, `INFO`. Defaults to `MEDIUM` (tenant default).
 
 ### Read-Only
 
