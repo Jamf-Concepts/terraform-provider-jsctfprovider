@@ -318,7 +318,12 @@ func resourceZTNAAppRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("assignmentgroups", response.Assignments.Inclusions.Groups)
 	d.Set("routingtype", response.Routing.Type)
 	d.Set("routingid", response.Routing.RouteId)
-	d.Set("routingdnstype", response.Routing.DnsIpResolutionType)
+	// Only set routingdnstype when routing is not DIRECT, since the API
+	// returns empty for DIRECT and we want to preserve the config/default
+	// value to avoid false drift detection
+	if response.Routing.Type != "DIRECT" {
+		d.Set("routingdnstype", response.Routing.DnsIpResolutionType)
+	}
 	d.Set("securityriskcontrolenabled", response.Security.RiskControls.Enabled)
 	d.Set("securityriskcontrolthreshold", response.Security.RiskControls.LevelThreshold)
 	d.Set("securityriskcontrolnotifications", response.Security.RiskControls.NotificationsEnabled)
