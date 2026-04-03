@@ -12,9 +12,9 @@ Manages a JSC admin account with configurable roles and permissions.
 
 ## Notes
 
-- **Roles**: Empty array (`[]`) or omitted = read-only admin. Known elevated roles: `SUPER_ADMIN`, `GLOBAL_ADMIN`, `MAGIC`
+- **Roles**: At the tenant level, only two values are valid: `SUPER_ADMIN` (full access, all permissions auto-granted) and `[]` empty array (read-only). `GLOBAL_ADMIN`, `WRITE_ADMIN`, and `MAGIC` are parent-org-level roles and will return a 400 error if used at the tenant level.
 - **Permissions**: Optional if role is `SUPER_ADMIN` (permissions are auto-granted by JSC). Required for read-only admins.
-- Update is implemented as delete + recreate (PUT endpoint not confirmed)
+- Update is implemented as an in-place PUT to the admin endpoint (delete + recreate is not used).
 - A 404 on read causes Terraform to mark the resource as destroyed and recreate on next `apply`
 
 ## Example Usage
@@ -52,7 +52,7 @@ resource "jsc_admin" "super_admin" {
 
 - `notification_categories` (List of String) Notification categories to subscribe to. Known values: SECURITY, MOBILE_DATA, SERVICE_MANAGEMENT.
 - `permissions` (List of String) Permissions granted to the admin. Not required if role is SUPER_ADMIN. Known values: DEVICES, ACCESS, SETTINGS, SECURITY, AUDIT_LOGS, USER_SUMMARY, CHANGE_PASSWORD_IN_RADAR.
-- `roles` (List of String) Roles assigned to the admin. Empty array = read-only. Known elevated roles: SUPER_ADMIN, GLOBAL_ADMIN, MAGIC.
+- `roles` (List of String) Roles assigned to the admin. At the tenant level, valid values are `SUPER_ADMIN` (full access, all permissions auto-granted) or empty array `[]` (read-only). `GLOBAL_ADMIN`, `WRITE_ADMIN`, and `MAGIC` are parent-org-level roles that will return a 400 error if used at the tenant level.
 - `sso_enabled` (Boolean) Whether SSO is enabled for this admin account. Defaults to false (local auth).
 
 ### Read-Only

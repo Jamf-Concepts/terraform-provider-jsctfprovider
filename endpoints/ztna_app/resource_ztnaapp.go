@@ -49,27 +49,38 @@ type ztnaAppSecurity struct {
 	DeviceManagementBasedAccess ztnaAppDeviceMgmtAccess `json:"deviceManagementBasedAccess"`
 }
 
+type ztnaAppGroupOverrides struct {
+	RoutingOverrides []ztnaAppRoutingOverride `json:"routingOverrides"`
+}
+
+type ztnaAppRoutingOverride struct {
+	GroupIds []string       `json:"groupIds"`
+	Routing  ztnaAppRouting `json:"routing"`
+}
+
 type ztnaAppRequest struct {
-	Name         string             `json:"name"`
-	Type         string             `json:"type"`
-	CategoryName string             `json:"categoryName"`
-	Hostnames    []string           `json:"hostnames"`
-	BareIps      []string           `json:"bareIps"`
-	Assignments  ztnaAppAssignments `json:"assignments"`
-	Routing      ztnaAppRouting     `json:"routing"`
-	Security     ztnaAppSecurity    `json:"security"`
+	Name           string                  `json:"name"`
+	Type           string                  `json:"type"`
+	CategoryName   string                  `json:"categoryName"`
+	Hostnames      []string                `json:"hostnames"`
+	BareIps        []string                `json:"bareIps"`
+	Assignments    ztnaAppAssignments      `json:"assignments"`
+	Routing        ztnaAppRouting          `json:"routing"`
+	Security       ztnaAppSecurity         `json:"security"`
+	GroupOverrides *ztnaAppGroupOverrides  `json:"groupOverrides,omitempty"`
 }
 
 type ztnaAppResponse struct {
-	ID           string             `json:"id"`
-	Name         string             `json:"name"`
-	Type         string             `json:"type"`
-	CategoryName string             `json:"categoryName"`
-	Hostnames    []string           `json:"hostnames"`
-	BareIps      []string           `json:"bareIps"`
-	Assignments  ztnaAppAssignments `json:"assignments"`
-	Routing      ztnaAppRouting     `json:"routing"`
-	Security     ztnaAppSecurity    `json:"security"`
+	ID             string                  `json:"id"`
+	Name           string                  `json:"name"`
+	Type           string                  `json:"type"`
+	CategoryName   string                  `json:"categoryName"`
+	Hostnames      []string                `json:"hostnames"`
+	BareIps        []string                `json:"bareIps"`
+	Assignments    ztnaAppAssignments      `json:"assignments"`
+	Routing        ztnaAppRouting          `json:"routing"`
+	Security       ztnaAppSecurity         `json:"security"`
+	GroupOverrides *ztnaAppGroupOverrides  `json:"groupOverrides,omitempty"`
 }
 
 func toStringSlice(in []interface{}) []string {
@@ -86,7 +97,7 @@ func buildZTNAAppRequest(d *schema.ResourceData) ztnaAppRequest {
 		routingdnstype = ""
 	}
 
-	return ztnaAppRequest{
+	req := ztnaAppRequest{
 		Name:         d.Get("name").(string),
 		Type:         d.Get("type").(string),
 		CategoryName: d.Get("categoryname").(string),
@@ -119,6 +130,29 @@ func buildZTNAAppRequest(d *schema.ResourceData) ztnaAppRequest {
 			},
 		},
 	}
+
+	if v, ok := d.GetOk("group_routing_overrides"); ok {
+		overridesList := v.([]interface{})
+		if len(overridesList) > 0 {
+			var routingOverrides []ztnaAppRoutingOverride
+			for _, item := range overridesList {
+				itemMap := item.(map[string]interface{})
+				override := ztnaAppRoutingOverride{
+					GroupIds: toStringSlice(itemMap["group_ids"].([]interface{})),
+					Routing: ztnaAppRouting{
+						Type:    itemMap["routing_type"].(string),
+						RouteId: itemMap["routing_id"].(string),
+					},
+				}
+				routingOverrides = append(routingOverrides, override)
+			}
+			req.GroupOverrides = &ztnaAppGroupOverrides{
+				RoutingOverrides: routingOverrides,
+			}
+		}
+	}
+
+	return req
 }
 
 // ResourceZTNAApp returns the schema.Resource for jsc_access_policy.
@@ -233,6 +267,28 @@ func ResourceZTNAApp() *schema.Resource {
 				Default:     false,
 				Description: "Enable notifications for device management based access events.",
 			},
+			"group_routing_overrides": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"group_ids": {
+							Type:     schema.TypeList,
+							Required: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+						"routing_type": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"routing_id": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+				Description: "Per-group routing overrides. Allows different routing configurations for specific device groups within the same policy.",
+			},
 		},
 	}
 }
@@ -327,14 +383,47 @@ func resourceZTNAAppRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("securitydevicemanagementbasedaccessenabled", response.Security.DeviceManagementBasedAccess.Enabled)
 	d.Set("securitydevicemanagementbasedaccessnotifications", response.Security.DeviceManagementBasedAccess.NotificationsEnabled)
 
+	if response.GroupOverrides != nil && len(response.GroupOverrides.RoutingOverrides) > 0 {
+		var overrides []map[string]interface{}
+		for _, ro := range response.GroupOverrides.RoutingOverrides {
+			override := map[string]interface{}{
+				"group_ids":    ro.GroupIds,
+				"routing_type": ro.Routing.Type,
+				"routing_id":   ro.Routing.RouteId,
+			}
+			overrides = append(overrides, override)
+		}
+		d.Set("group_routing_overrides", overrides)
+	} else {
+		d.Set("group_routing_overrides", []interface{}{})
+	}
+
 	return nil
 }
 
 func resourceZTNAAppUpdate(d *schema.ResourceData, m interface{}) error {
-	if err := resourceZTNAAppDelete(d, m); err != nil {
-		return err
+	payload, err := json.Marshal(buildZTNAAppRequest(d))
+	if err != nil {
+		return fmt.Errorf("failed to marshal jsc_access_policy update payload: %v", err)
 	}
-	return resourceZTNAAppCreate(d, m)
+
+	req, err := http.NewRequest("PUT", fmt.Sprintf("https://radar.wandera.com/gate/traffic-routing-service/v1/apps/%s", d.Id()), bytes.NewBuffer(payload))
+	if err != nil {
+		return fmt.Errorf("failed to build jsc_access_policy update request: %v", err)
+	}
+
+	resp, err := auth.MakeRequest(req)
+	if err != nil {
+		return fmt.Errorf("jsc_access_policy update request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("failed to update jsc_access_policy: %s (response: %s)", resp.Status, string(body))
+	}
+
+	return resourceZTNAAppRead(d, m)
 }
 
 func resourceZTNAAppDelete(d *schema.ResourceData, m interface{}) error {
