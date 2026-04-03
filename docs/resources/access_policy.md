@@ -19,7 +19,7 @@ Used in the SwiftConnect Mini Onboarder to route traffic to SwiftConnect provisi
 
 ## Notes
 
-- Update is implemented as delete + recreate (no confirmed PUT endpoint)
+- Update is implemented as an in-place PUT to the app endpoint (delete + recreate is not used).
 - A 404 on read causes Terraform to mark the resource as destroyed and recreate on next `apply`
 - When `routingtype = "DIRECT"`, `routingid` and `routingdnstype` are omitted from the request
 - `routingid` values can be obtained from the `jsc_pag_vpnroutes` datasource
@@ -67,6 +67,10 @@ resource "jsc_access_policy" "swiftconnect_access_policy" {
 - `securityriskcontrolnotifications` (Boolean) Enable notifications for risk control events. Default: `true`.
 - `securityriskcontrolthreshold` (String) Risk level threshold for access. `HIGH`, `MEDIUM`, or `LOW`. Default: `HIGH`.
 - `type` (String) The app type. Use `ENTERPRISE` for SwiftConnect routing. Default: `ENTERPRISE`.
+- `group_routing_overrides` (List of Object) Per-group routing overrides. Allows different routing configurations for specific device groups within the same policy. Each entry supports:
+  - `group_ids` (List of String, Required) The device group IDs this override applies to.
+  - `routing_type` (String, Required) The routing type for this group. E.g., `DIRECT` or `CUSTOM`.
+  - `routing_id` (String, Optional) The VPN route ID for `CUSTOM` routing.
 
 ### Read-Only
 

@@ -50,3 +50,4 @@ terraform.rc
 tflint-report.json
 tfsec-report.json
 test-import/
+test/
