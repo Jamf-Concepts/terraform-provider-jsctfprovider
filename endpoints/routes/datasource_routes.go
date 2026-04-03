@@ -58,7 +58,7 @@ func DataSourceRoutes() *schema.Resource {
 
 // Define the read function for routes
 func dataSourceRoutesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	req, err := http.NewRequest("GET", "https://radar.wandera.com/gate/traffic-routing-service/v2/vpn-routes?view=deployments_with_status", nil)
+	req, err := http.NewRequest("GET", "https://radar.wandera.com/gate/traffic-routing-service/v2/vpn-routes?view=deployments", nil)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create HTTP request: %v", err))
 	}
