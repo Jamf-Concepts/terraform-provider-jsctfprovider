@@ -8,11 +8,18 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
 
 	"jsctfprovider/internal/auth"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+// Mutex to serialize read-modify-write operations on hostname mappings.
+// The API stores all mappings as a single collection, so concurrent
+// modifications cause a race condition where parallel creates overwrite
+// each other.
+var hostnameMappingMu sync.Mutex
 
 // Define the schema for the Okta resource
 func ResourceHostnameMapping() *schema.Resource {
@@ -109,6 +116,9 @@ func getAllHostnameMappings() (*Mappings, error) {
 
 // Define the create function for the mapping resource
 func resourceHostnameMappingCreate(d *schema.ResourceData, m interface{}) error {
+	// Lock to prevent concurrent read-modify-write race conditions
+	hostnameMappingMu.Lock()
+	defer hostnameMappingMu.Unlock()
 
 	response, err := getAllHostnameMappings()
 	if err != nil {
@@ -213,18 +223,81 @@ func resourceHostnameMappingRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-// Define the update function for the hostname  resource NOT IMPLIMENTED
-
+// Define the update function for the hostname resource
 func resourceHostnameMappingUpdate(d *schema.ResourceData, m interface{}) error {
+	// Lock to prevent concurrent read-modify-write race conditions
+	hostnameMappingMu.Lock()
+	defer hostnameMappingMu.Unlock()
 
-	d.Set("requires_replace", true)
-	resourceHostnameMappingDelete(d, m)
-	resourceHostnameMappingCreate(d, m)
+	response, err := getAllHostnameMappings()
+	if err != nil {
+		return err
+	}
+
+	// Convert schema.TypeSet to []string for A records
+	aSet := d.Get("a").(*schema.Set)
+	var aList []string
+	for _, item := range aSet.List() {
+		aList = append(aList, item.(string))
+	}
+
+	// Convert schema.TypeSet to []string for AAAA records
+	aaaaSet := d.Get("aaaa").(*schema.Set)
+	var aaaaList []string
+	for _, item := range aaaaSet.List() {
+		aaaaList = append(aaaaList, item.(string))
+	}
+
+	// Find and update the existing mapping
+	found := false
+	for i, mapping := range response.Mapping {
+		if strings.EqualFold(mapping.Hostname, d.Id()) {
+			response.Mapping[i] = Mapping{
+				Hostname:  d.Get("hostname").(string),
+				SecureDNS: d.Get("securedns").(bool),
+				ZTNA:      d.Get("ztna").(bool),
+				A:         aList,
+				AAAA:      aaaaList,
+			}
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("hostname mapping not found for update: %s", d.Id())
+	}
+
+	payload, err := json.Marshal(response)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("PUT", "https://radar.wandera.com/gate/dns-zone-management-service/v1/custom-hostname-mappings", bytes.NewBuffer(payload))
+	if err != nil {
+		return err
+	}
+
+	resp, err := auth.MakeRequest(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != 201 {
+		return fmt.Errorf("failed to update hostname mapping: %s", resp.Status)
+	}
+
+	// Update the ID if hostname changed
+	d.SetId(d.Get("hostname").(string))
 	return nil
 }
 
 // Define the delete function for the hostname resource
 func resourceHostnameMappingDelete(d *schema.ResourceData, m interface{}) error {
+	// Lock to prevent concurrent read-modify-write race conditions
+	hostnameMappingMu.Lock()
+	defer hostnameMappingMu.Unlock()
 
 	response, err := getAllHostnameMappings()
 	if err != nil {
