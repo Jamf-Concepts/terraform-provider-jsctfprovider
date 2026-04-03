@@ -17,11 +17,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// define type of route - don't use much but nice to keep for future use
-type Groups struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Devices int64  `json:"devices"`
+// Group represents a device group from the user-service API
+type Group struct {
+	Group          *string `json:"group"`   // nullable for ungrouped devices
+	GroupId        *string `json:"groupId"` // nullable for ungrouped devices
+	Devices        int64   `json:"devices"`
+	DeletedDevices int64   `json:"deletedDevices"`
 }
 
 func DataSourceGroups() *schema.Resource {
@@ -48,15 +49,13 @@ func DataSourceGroups() *schema.Resource {
 	}
 }
 
-// Define the read function for routes
+// Define the read function for groups
 func dataSourceGroupsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	//routeName := d.Get("name").(string)
-
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://radar.wandera.com/api/groups"), nil)
+	req, err := http.NewRequest("GET", "https://radar.wandera.com/gate/user-service/user/v3/{customerid}/groups?showDeleted=false", nil)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error converting making http request body"))
+		return diag.FromErr(fmt.Errorf("error creating http request: %v", err))
 	}
-	resp, err := auth.MakeRequest((req))
+	resp, err := auth.MakeRequest(req)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -65,36 +64,36 @@ func dataSourceGroupsRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
-		return diag.FromErr(fmt.Errorf("failed to read routes info: %s", resp.Status))
+		return diag.FromErr(fmt.Errorf("failed to read groups info: %s", resp.Status))
 	}
 
 	// Read the response body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error making parsing body response"))
+		return diag.FromErr(fmt.Errorf("error parsing body response: %v", err))
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
 	// Parse the response JSON
-
-	var response []Groups
+	var response []Group
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// Find id from the first instance where name contains "the provided name"
-
-	for _, groups := range response {
-		if strings.EqualFold(groups.Name, d.Get("name").(string)) {
-			d.Set("name", groups.Name)
-			d.SetId(groups.ID)
-			d.Set("devices", groups.Devices)
-			break
+	// Find group by name (case-insensitive match)
+	searchName := d.Get("name").(string)
+	for _, group := range response {
+		// Skip entries with null group name (ungrouped devices)
+		if group.Group == nil || group.GroupId == nil {
+			continue
+		}
+		if strings.EqualFold(*group.Group, searchName) {
+			d.Set("name", *group.Group)
+			d.SetId(*group.GroupId)
+			d.Set("devices", group.Devices)
+			return nil
 		}
 	}
 
-	return nil
+	return diag.FromErr(fmt.Errorf("group not found: %s", searchName))
 }
