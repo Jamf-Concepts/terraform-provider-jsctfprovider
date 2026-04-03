@@ -41,6 +41,7 @@ type IdpFormat struct {
 }
 
 type Data struct {
+	AppBrand                  string                 `json:"appBrand"`
 	Code                      interface{}            `json:"code"`
 	Name                      string                 `json:"name"`
 	GroupId                   string                 `json:"groupId"`
@@ -114,6 +115,7 @@ type Data struct {
 }
 
 type DataNR struct {
+	AppBrand                    string                 `json:"appBrand"`
 	Code                        interface{}            `json:"code"`
 	Name                        string                 `json:"name"`
 	GroupId                     string                 `json:"groupId"`
@@ -188,22 +190,26 @@ type DataNR struct {
 }
 
 type DataNoIdP struct {
-	Code                      interface{}            `json:"code"`
-	Name                      string                 `json:"name"`
-	GroupId                   string                 `json:"groupId"`
-	Used                      interface{}            `json:"used"`
-	Management                Management             `json:"management"`
-	Passcode                  interface{}            `json:"passcode"`
-	Errors                    map[string]interface{} `json:"errors"`
-	ExtraDeviceAttributes     interface{}            `json:"extraDeviceAttributes"`
-	Idp                       interface{}            `json:"idp"`
-	ActiveTab                 string                 `json:"activeTab"`
-	AvailableProxyInterfaces  []string               `json:"availableProxyInterfaces"`
-	SecureDnsDefaultMandatory bool                   `json:"secureDnsDefaultMandatory"`
-	LocationServices          string                 `json:"locationServices"`
-	CloudProxy                string                 `json:"cloudProxy"`
-	InAppDnsControl           string                 `json:"inAppDnsControl"`
-	RootCertificates          RootCertificates       `json:"rootCertificates"`
+	AppBrand                    string                 `json:"appBrand"`
+	Code                        interface{}            `json:"code"`
+	Name                        string                 `json:"name"`
+	GroupId                     string                 `json:"groupId"`
+	Used                        interface{}            `json:"used"`
+	Management                  Management             `json:"management"`
+	Passcode                    interface{}            `json:"passcode"`
+	Errors                      map[string]interface{} `json:"errors"`
+	ExtraDeviceAttributes       interface{}            `json:"extraDeviceAttributes"`
+	Idp                         interface{}            `json:"idp"`
+	ActiveTab                   string                 `json:"activeTab"`
+	AvailableProxyInterfaces    []string               `json:"availableProxyInterfaces"`
+	SecureDnsDefaultMandatory   bool                   `json:"secureDnsDefaultMandatory"`
+	NetworkCompatibilityMode    string                 `json:"networkCompatibilityMode"`
+	LocationServices            string                 `json:"locationServices"`
+	NetworkRelayTamperProofness string                 `json:"networkRelayTamperProofness"`
+	CloudProxy                  string                 `json:"cloudProxy"`
+	InAppDnsControl             string                 `json:"inAppDnsControl"`
+	InAppZtna                   string                 `json:"inAppZtna"`
+	RootCertificates            RootCertificates       `json:"rootCertificates"`
 	HasFailed                 bool                   `json:"hasFailed"`
 	IsLoading                 bool                   `json:"isLoading"`
 	IsSaving                  bool                   `json:"isSaving"`
@@ -263,6 +269,7 @@ func makepayloadstruct(activationprofilename string, idpconnectionid string, pri
 	// Create an instance of the Data struct
 
 	data := Data{
+		AppBrand:         "JAMF_TRUST",
 		Name:             activationprofilename,
 		GroupId:          "DEFAULT",
 		ActiveTab:        "INTUNE",
@@ -350,18 +357,25 @@ func makepayloadstructnoidp(activationprofilename string, threatdefence bool, da
 	// Create an instance of the Data struct
 
 	data := DataNoIdP{
-		Name:             activationprofilename,
-		GroupId:          "DEFAULT",
-		ActiveTab:        "INTUNE",
-		LocationServices: "BEST_EFFORT",
-		CloudProxy:       "NONE",
-		InAppDnsControl:  "REQUIRED",
+		AppBrand:                    "JAMF_TRUST",
+		Name:                        activationprofilename,
+		GroupId:                     "DEFAULT",
+		ActiveTab:                   "INTUNE",
+		Errors:                      map[string]interface{}{},
+		AvailableProxyInterfaces:    []string{"CELLULAR_ONLY"},
+		NetworkCompatibilityMode:    "NONE",
+		LocationServices:            "BEST_EFFORT",
+		NetworkRelayTamperProofness: "USER_CONTROLLABLE",
+		CloudProxy:                  "NONE",
+		InAppDnsControl:             "REQUIRED",
+		InAppZtna:                   "OPTIONAL",
 		RootCertificates: RootCertificates{
 			Enabled: true,
 		},
-		HasFailed: false,
-		IsLoading: false,
-		// Populate other fields as needed...
+		HasFailed:        false,
+		IsLoading:        false,
+		IsOptionsLoaded:  true,
+		IsLoadingOptions: false,
 		LicenceSpecifics: struct {
 			EligibleForCloudProxy bool `json:"eligibleForCloudProxy"`
 		}{EligibleForCloudProxy: false},
@@ -369,12 +383,14 @@ func makepayloadstructnoidp(activationprofilename string, threatdefence bool, da
 
 	// Additional capabilities
 	data.Capabilities.DeviceIdentity.Enabled = false
+	data.Capabilities.DeviceIdentity.TrustConsumers = []string{"AWS"}
 	data.Capabilities.PhysicalAccess.Enabled = false
 	data.Capabilities.PrivateAccess.Enabled = false
 	data.Capabilities.DataPolicy.Enabled = datapolicy
 	data.Capabilities.ThreatDefence.Enabled = false
 	data.Capabilities.NetworkSecurity.Enabled = threatdefence
-	data.Capabilities.VulnerabilityManagement.Enabled = true
+	data.Capabilities.VulnerabilityManagement.Enabled = threatdefence
+	data.Capabilities.NetworkRelay.Enabled = false
 	data.Capabilities.Wireguard.Enabled = false
 	data.Capabilities.Proxy.Enabled = false
 	data.Capabilities.Proxy.ControlledNetworkInterfaces = "CELLULAR_ONLY"
@@ -423,6 +439,7 @@ func makepayloadstructnoidp(activationprofilename string, threatdefence bool, da
 
 func makepayloadstructNR(activationprofilename string) DataNR {
 	data := DataNR{
+		AppBrand:         "JAMF_TRUST",
 		Name:             activationprofilename,
 		GroupId:          "DEFAULT",
 		ActiveTab:        "INTUNE",
@@ -533,27 +550,32 @@ func ResourceActivationProfile() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validateIdP,
 				Default:      "None",
+				ForceNew:     true,
 				Description:  "Allowed values of 'Okta', 'None, or 'NetworkRelay'. If NetworkRelay is selected, only Private Access will be enabled",
 			},
 			"oktaconnectionid": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				ForceNew:    true,
 				Description: "Okta Connection ID. Required when idptype is set to OKTA",
 			},
 			"privateaccess": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
+				ForceNew: true,
 			},
 			"threatdefence": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
+				ForceNew: true,
 			},
 			"datapolicy": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
+				ForceNew: true,
 			},
 			"supervisedappconfig": {
 				Type:        schema.TypeString,
@@ -621,7 +643,7 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-	req, err := http.NewRequest("POST", "https://radar.wandera.com/gate/activation-profile-service/v2/enrollment-links", bytes.NewBuffer(payload))
+	req, err := http.NewRequest("POST", "https://radar.wandera.com/gate/activation-profile-service/v2/enrollment-links?appBrand=JAMF_TRUST", bytes.NewBuffer(payload))
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "additional information2")
 	}
@@ -764,13 +786,41 @@ func resourceAPRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-// Define the update function for the Okta  resource NOT IMPLIMENTED
+// resourceAPUpdate updates an activation profile (only name can be updated)
 func resourceAPUpdate(d *schema.ResourceData, m interface{}) error {
+	if !d.HasChange("name") {
+		return nil
+	}
 
-	d.Set("requires_replace", true)
-	resourceAPDelete(d, m)
-	resourceAPCreate(d, m)
-	return nil
+	// Build the update payload
+	updatePayload := map[string]string{
+		"code":    d.Id(),
+		"name":    d.Get("name").(string),
+		"groupId": "DEFAULT",
+	}
+
+	payload, err := json.Marshal(updatePayload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal update payload: %v", err)
+	}
+
+	req, err := http.NewRequest("PUT", fmt.Sprintf("https://radar.wandera.com/gate/activation-profile-service/v1/enrollment-links/%s?appBrand=JAMF_TRUST", d.Id()), bytes.NewBuffer(payload))
+	if err != nil {
+		return fmt.Errorf("failed to create update request: %v", err)
+	}
+
+	resp, err := auth.MakeRequest(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute update request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("failed to update activation profile: %s - %s", resp.Status, string(body))
+	}
+
+	return resourceAPRead(d, m)
 }
 
 // need to apply this function
