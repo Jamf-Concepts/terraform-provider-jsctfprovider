@@ -12,3 +12,16 @@ resource "jsc_access_policy" "swiftconnect_access_policy" {
   securityriskcontrolenabled   = true
   securityriskcontrolthreshold = "HIGH"
 }
+
+# Template-based (SaaS app)
+data "jsc_app_template" "okta" {
+  name = "Okta"
+}
+
+resource "jsc_access_policy" "okta" {
+  name            = "Okta Access"
+  app_template_id = data.jsc_app_template.okta.id
+  routingtype     = "DIRECT"
+
+  assignmentallusers = true
+}
