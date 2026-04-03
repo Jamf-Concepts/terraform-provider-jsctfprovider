@@ -80,10 +80,6 @@ func resourceOktaIdpCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
-
 	// Parse the response JSON
 	var response struct {
 		ID string `json:"id"`
@@ -123,16 +119,6 @@ func resourceOktaIdpRead(d *schema.ResourceData, m interface{}) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to read OKTA IDP info: %s", resp.Status)
 	}
-
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
 
 	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"sync"
 
@@ -114,16 +113,6 @@ func resourceBlockPageCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("failed to create block page : %s", resp.Status+" "+string(payload))
 	}
 
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("an error occurred: %s", "additional information4")
-	}
-
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
-
 	// Set the resource ID... hint there's only 1 ID of UEMC!
 	d.SetId("1")
 
@@ -153,16 +142,6 @@ func resourceBlockPageRead(d *schema.ResourceData, m interface{}) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to read BlockPage info: %s", resp.Status)
 	}
-
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
 
 	return nil
 }
@@ -215,16 +194,6 @@ func resourceBlockPageCDelete(d *schema.ResourceData, m interface{}) error {
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != 204 {
 		return fmt.Errorf("failed to reset block page : %s", resp.Status+" "+string(payload))
 	}
-
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
 
 	// Clear the resource ID
 	d.SetId("")

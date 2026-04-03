@@ -181,19 +181,12 @@ func dataSourceMappingsRead(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.FromErr(fmt.Errorf("error making parsing body response"))
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
 	// Parse the response JSON
-
 	var response Mappings
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	// Print the parsed struct
-	fmt.Printf("Parsed struct: %+v\n", response)
 
 	// Find id from the first instance where name contains "the provided name"
 
