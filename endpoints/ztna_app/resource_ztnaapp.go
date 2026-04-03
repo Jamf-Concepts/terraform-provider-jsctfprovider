@@ -50,26 +50,28 @@ type ztnaAppSecurity struct {
 }
 
 type ztnaAppRequest struct {
-	Name         string             `json:"name"`
-	Type         string             `json:"type"`
-	CategoryName string             `json:"categoryName"`
-	Hostnames    []string           `json:"hostnames"`
-	BareIps      []string           `json:"bareIps"`
-	Assignments  ztnaAppAssignments `json:"assignments"`
-	Routing      ztnaAppRouting     `json:"routing"`
-	Security     ztnaAppSecurity    `json:"security"`
+	Name          string             `json:"name"`
+	Type          string             `json:"type"`
+	CategoryName  string             `json:"categoryName"`
+	AppTemplateId string             `json:"appTemplateId,omitempty"`
+	Hostnames     []string           `json:"hostnames"`
+	BareIps       []string           `json:"bareIps"`
+	Assignments   ztnaAppAssignments `json:"assignments"`
+	Routing       ztnaAppRouting     `json:"routing"`
+	Security      ztnaAppSecurity    `json:"security"`
 }
 
 type ztnaAppResponse struct {
-	ID           string             `json:"id"`
-	Name         string             `json:"name"`
-	Type         string             `json:"type"`
-	CategoryName string             `json:"categoryName"`
-	Hostnames    []string           `json:"hostnames"`
-	BareIps      []string           `json:"bareIps"`
-	Assignments  ztnaAppAssignments `json:"assignments"`
-	Routing      ztnaAppRouting     `json:"routing"`
-	Security     ztnaAppSecurity    `json:"security"`
+	ID            string             `json:"id"`
+	Name          string             `json:"name"`
+	Type          string             `json:"type"`
+	CategoryName  string             `json:"categoryName"`
+	AppTemplateId string             `json:"appTemplateId,omitempty"`
+	Hostnames     []string           `json:"hostnames"`
+	BareIps       []string           `json:"bareIps"`
+	Assignments   ztnaAppAssignments `json:"assignments"`
+	Routing       ztnaAppRouting     `json:"routing"`
+	Security      ztnaAppSecurity    `json:"security"`
 }
 
 func toStringSlice(in []interface{}) []string {
@@ -87,11 +89,12 @@ func buildZTNAAppRequest(d *schema.ResourceData) ztnaAppRequest {
 	}
 
 	return ztnaAppRequest{
-		Name:         d.Get("name").(string),
-		Type:         d.Get("type").(string),
-		CategoryName: d.Get("categoryname").(string),
-		Hostnames:    toStringSlice(d.Get("hostnames").([]interface{})),
-		BareIps:      toStringSlice(d.Get("bareips").([]interface{})),
+		Name:          d.Get("name").(string),
+		Type:          d.Get("type").(string),
+		CategoryName:  d.Get("categoryname").(string),
+		AppTemplateId: d.Get("app_template_id").(string),
+		Hostnames:     toStringSlice(d.Get("hostnames").([]interface{})),
+		BareIps:       toStringSlice(d.Get("bareips").([]interface{})),
 		Assignments: ztnaAppAssignments{
 			Inclusions: ztnaAppInclusions{
 				AllUsers: d.Get("assignmentallusers").(bool),
@@ -149,6 +152,12 @@ func ResourceZTNAApp() *schema.Resource {
 				Optional:    true,
 				Default:     "Uncategorized",
 				Description: "Category name for the app.",
+			},
+			"app_template_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "ID of the SaaS app template to base this policy on (e.g., from jsc_app_template data source). When set, hostnames are inherited from the template.",
 			},
 			"hostnames": {
 				Type:        schema.TypeList,
@@ -312,6 +321,7 @@ func resourceZTNAAppRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("name", response.Name)
 	d.Set("type", response.Type)
 	d.Set("categoryname", response.CategoryName)
+	d.Set("app_template_id", response.AppTemplateId)
 	d.Set("hostnames", response.Hostnames)
 	d.Set("bareips", response.BareIps)
 	d.Set("assignmentallusers", response.Assignments.Inclusions.AllUsers)
