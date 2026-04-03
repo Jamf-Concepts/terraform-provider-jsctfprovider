@@ -119,6 +119,7 @@ func main() {
 					"jsc_idp_connection":      idp.DataSourceIdpConnection(),
 					"jsc_entra_idps":          entraidp.DataSourceEntraIdps(),
 					"jsc_access_policies":     ztnaapp.DataSourceAccessPolicies(),
+					"jsc_app_template":        ztnaapp.DataSourceAppTemplate(),
 					"jsc_activation_profiles": activationprofiles.DataSourceActivationProfiles(),
 				},
 				ConfigureFunc: providerConfigure,
