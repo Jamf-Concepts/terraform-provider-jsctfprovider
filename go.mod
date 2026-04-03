@@ -1,6 +1,6 @@
 module jsctfprovider
 
-go 1.25.0
+go 1.22.0
 
 //toolchain go1.22.2
 
