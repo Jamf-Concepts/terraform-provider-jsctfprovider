@@ -1,12 +1,12 @@
 module jsctfprovider
 
-go 1.22.0
+go 1.25.0
 
 //toolchain go1.22.2
 
 require (
 	github.com/hashicorp/terraform-plugin-docs v0.24.0
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.39.0
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.0
 	golang.org/x/net v0.52.0
 )
 
