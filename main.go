@@ -9,6 +9,7 @@ import (
 	entraidp "jsctfprovider/endpoints/entra_idp"
 	"jsctfprovider/endpoints/categories"
 	"jsctfprovider/endpoints/groups"
+	"jsctfprovider/endpoints/groupedgws"
 	"jsctfprovider/endpoints/hostnamemapping"
 	"jsctfprovider/endpoints/idp"
 	pagapptemplates "jsctfprovider/endpoints/pag_apptemplates"
@@ -109,6 +110,7 @@ func main() {
 				// Define the datasources
 				DataSourcesMap: map[string]*schema.Resource{
 					"jsc_routes":              routes.DataSourceRoutes(),
+					"jsc_groupedgws":          groupedgws.DataSourceGroupedGWs(),
 					"jsc_pag_vpnroutes":       pagvpnroutes.DataSourcePAGVPNRoutes(),
 					"jsc_pag_apptemplates":    pagapptemplates.DataSourcePAGAppTemplates(),
 					"jsc_pag_ztnaapp":         pagztnaapp.DataSourcePAGZTNAApp(),
