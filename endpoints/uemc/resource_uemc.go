@@ -38,6 +38,7 @@ func ResourceUEMC() *schema.Resource {
 			"clientsecret": {
 				Type:        schema.TypeString,
 				Required:    true,
+				Sensitive:   true,
 				Description: "Client Secret of Jamf Pro API Integration.",
 			},
 			"clientid": {
