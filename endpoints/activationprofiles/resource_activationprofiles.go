@@ -340,17 +340,7 @@ func makepayloadstruct(activationprofilename string, idpconnectionid string, pri
 		// Add more Licenced Amalgams as needed...
 	}
 
-	// Marshal the struct into JSON
-	jsonData, err := json.MarshalIndent(data, "", "    ")
-	if err != nil {
-		fmt.Println("Error marshaling JSON:", err)
-		//return
-	}
-
-	// Print the JSON data
-	fmt.Println(string(jsonData))
 	return data
-
 }
 
 func makepayloadstructnoidp(activationprofilename string, threatdefence bool, datapolicy bool) DataNoIdP {
@@ -424,17 +414,7 @@ func makepayloadstructnoidp(activationprofilename string, threatdefence bool, da
 		// Add more Licenced Amalgams as needed...
 	}
 
-	// Marshal the struct into JSON
-	jsonData, err := json.MarshalIndent(data, "", "    ")
-	if err != nil {
-		fmt.Println("Error marshaling JSON:", err)
-		//return
-	}
-
-	// Print the JSON data
-	fmt.Println(string(jsonData))
 	return data
-
 }
 
 func makepayloadstructNR(activationprofilename string) DataNR {
@@ -494,12 +474,6 @@ func makepayloadstructNR(activationprofilename string) DataNR {
 			RootCertificates:             "OPTIONAL",
 			DefaultLocationServices:      "DISABLED",
 		},
-	}
-
-	// Print for debugging
-	jsonData, err := json.MarshalIndent(data, "", "    ")
-	if err == nil {
-		fmt.Println(string(jsonData))
 	}
 
 	return data
@@ -663,10 +637,6 @@ func resourceAPCreate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return fmt.Errorf("an error occurred: %s", "additional information4")
 	}
-
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
 
 	// Parse the response JSON
 	var response struct {

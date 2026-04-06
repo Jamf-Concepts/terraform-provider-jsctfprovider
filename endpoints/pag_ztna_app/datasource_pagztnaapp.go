@@ -200,9 +200,6 @@ func dataSourcePAGZTNAAppRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(fmt.Errorf("error making parsing body response"))
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
 	// Parse the response JSON
 
 	var response []ResponseItemZTNAApps

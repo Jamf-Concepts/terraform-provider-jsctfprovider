@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"jsctfprovider/internal/auth"
@@ -99,10 +100,6 @@ func resourceUEMCCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
-
 	// Parse the response JSON
 	var response struct {
 		ID string `json:"id"`
@@ -148,21 +145,13 @@ func resourceUEMCRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
-
 	// Parse the response JSON and extract the ID
 	var configsResp ConfigsResponse
 	if err := json.Unmarshal(body, &configsResp); err != nil {
 		return err
 	}
 
-	if len(configsResp.Configs) > 0 {
-		configID := configsResp.Configs[0].ID
-		fmt.Println("Extracted config ID:", configID)
-
-	} else {
+	if len(configsResp.Configs) == 0 {
 		return fmt.Errorf("no configs found in response")
 	}
 
@@ -195,9 +184,9 @@ func resourceUEMCDelete(d *schema.ResourceData, m interface{}) error {
 	}
 	defer resp.Body.Close()
 
-	// Check the response status code
+	// Check the response status code - continue anyway to clear state
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != 204 {
-		fmt.Println("failed to delete UEMC but removing state regardless: %v %v %v", resp.Status, resp, req)
+		log.Printf("[WARN] failed to delete UEMC (status %s), removing from state anyway", resp.Status)
 	}
 
 	// Clear the resource ID

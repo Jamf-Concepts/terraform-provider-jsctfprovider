@@ -253,10 +253,6 @@ func resourcePAGZTNAAppCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
-
 	// Parse the response JSON
 	var response struct {
 		ID string `json:"id"`
@@ -298,11 +294,7 @@ func resourcePAGZTNAAppRead(d *schema.ResourceData, m interface{}) error {
 		return (fmt.Errorf("error making parsing body response"))
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
 	// Parse the response JSON
-
 	var response ResponseItemZTNAApp
 	err = json.Unmarshal(body, &response)
 	if err != nil {

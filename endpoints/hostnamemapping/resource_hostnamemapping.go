@@ -97,19 +97,12 @@ func getAllHostnameMappings() (*Mappings, error) {
 		return nil, (fmt.Errorf("error making parsing body response"))
 	}
 
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
 	// Parse the response JSON
-
 	var response Mappings
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return nil, (err)
 	}
-
-	// Print the parsed struct
-	fmt.Printf("Parsed struct: %+v\n", response)
 
 	return &response, nil
 }
@@ -136,19 +129,17 @@ func resourceHostnameMappingCreate(d *schema.ResourceData, m interface{}) error 
 
 	var aList []string
 	for _, item := range aSet.List() {
-		// Convert each item to a string
 		aList = append(aList, item.(string))
 	}
-	fmt.Println("A List:", aList)
+
 	// Convert schema.TypeSet to []string
 	aaaaSet := d.Get("aaaa").(*schema.Set)
 
 	var aaaaList []string
 	for _, item := range aaaaSet.List() {
-		// Convert each item to a string
 		aaaaList = append(aaaaList, item.(string))
 	}
-	fmt.Println("AAAA List:", aaaaList)
+
 	// Create a new Mapping to append
 	newMapping := Mapping{
 		Hostname:  d.Get("hostname").(string),
@@ -158,15 +149,13 @@ func resourceHostnameMappingCreate(d *schema.ResourceData, m interface{}) error 
 		AAAA:      aaaaList,
 	}
 	response.Mapping = append(response.Mapping, newMapping)
-	// Print the parsed struct
-	fmt.Printf("New Parsed struct: %+v\n", response)
 
 	payload, err := json.Marshal(response)
 	if err != nil {
 		return err
 	}
-	fmt.Println("JSON Payload:", string(payload))
-	// Make a PUT request to update all ammpings
+
+	// Make a PUT request to update all mappings
 	req, err := http.NewRequest("PUT", ("https://radar.wandera.com/gate/dns-zone-management-service/v1/custom-hostname-mappings"), bytes.NewBuffer(payload))
 	if err != nil {
 		return err
@@ -181,16 +170,6 @@ func resourceHostnameMappingCreate(d *schema.ResourceData, m interface{}) error 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != 201 {
 		return fmt.Errorf("failed to create hostname mapping: %s", resp.Status+" ")
 	}
-
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
 
 	d.SetId(d.Get("hostname").(string))
 	return nil
@@ -310,14 +289,13 @@ func resourceHostnameMappingDelete(d *schema.ResourceData, m interface{}) error 
 		}
 	}
 	response.Mapping = filteredMappings
-	fmt.Printf("New Parsed struct: %+v\n", response)
 
 	payload, err := json.Marshal(response)
 	if err != nil {
 		return err
 	}
-	fmt.Println("JSON Payload:", string(payload))
-	// Make a PUT request to update all ammpings
+
+	// Make a PUT request to update all mappings
 	req, err := http.NewRequest("PUT", ("https://radar.wandera.com/gate/dns-zone-management-service/v1/custom-hostname-mappings"), bytes.NewBuffer(payload))
 	if err != nil {
 		return err
@@ -333,15 +311,6 @@ func resourceHostnameMappingDelete(d *schema.ResourceData, m interface{}) error 
 		return fmt.Errorf("failed to delete hostname mapping: %s", resp.Status+" ")
 	}
 
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	// Parse the response JSON if needed
-	// (this depends on the structure of the API response)
-	fmt.Println(string(body))
 	// Clear the resource ID
 	d.SetId("")
 
