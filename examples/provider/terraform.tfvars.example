@@ -13,8 +13,3 @@ jsc_customerid = "empty"
 # Optional: PAG resources configuration
 # jsc_applicationid     = "your-application-id"
 # jsc_applicationsecret = "your-application-secret"
-
-# Optional: Protect resources configuration
-# jsc_protectclientid       = "your-protect-client-id"
-# jsc_protectclientpassword = "your-protect-password"
-# jsc_protectdomainname     = "your-tenant.protect.jamfcloud.com"

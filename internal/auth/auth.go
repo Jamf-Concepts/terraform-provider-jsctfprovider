@@ -16,12 +16,6 @@ import (
 	"time"
 )
 
-type ProtectTokenResponse struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   int    `json:"expires_in"`
-	TokenType   string `json:"token_type"`
-}
-
 var xsrfToken string
 var sessionCookie string
 var pagjwt string
@@ -30,55 +24,6 @@ var providerDomainName string
 
 var holdUsername string
 var holdPassword string
-
-var protectAuthToken string
-var protectDomainname string
-
-func AuthenticateProtect(domainname string, clientid string, clientpassword string) error {
-
-	authpayload := "{\"client_id\": \"" + clientid + "\", \"password\": \"" + clientpassword + "\"}"
-	fmt.Printf("Payload for auth creating request: client_id=%s, password=[REDACTED]\n", clientid)
-	url := fmt.Sprintf("https://%s/token", domainname)
-
-	req, err := http.NewRequest("POST", url, strings.NewReader(authpayload))
-	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	// Create an HTTP client and perform the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error sending request:", err)
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Read and print the response
-	fmt.Println("Response status:", resp.Status)
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return err
-	}
-	//fmt.Println("Response body:", string(body))
-
-	// Create a variable to store the unmarshalled data
-	var tokenResp ProtectTokenResponse
-
-	errJson := json.Unmarshal(body, &tokenResp)
-	if errJson != nil {
-		log.Fatalf("Error unmarshalling JSON: %v", err)
-	}
-
-	log.Println("[INFO] Successfully obtained Protect access token")
-
-	protectAuthToken = tokenResp.AccessToken
-	protectDomainname = domainname
-	return nil
-}
 
 func AuthenticatePAG(Applicationid string, Applicationsecret string) error {
 
@@ -126,8 +71,6 @@ func AuthenticatePAG(Applicationid string, Applicationsecret string) error {
 		return fmt.Errorf("failed to parse response: %v", err)
 	}
 
-	// Return the token
-	println(apiResponse.Token)
 	pagjwt = apiResponse.Token
 
 	return nil
@@ -200,7 +143,7 @@ func AuthenticateRadarAPI(DomainName string, Username string, Password string, C
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
 		// Try Jamf ID Authentication as fallback
-		fmt.Printf("Local auth failed (%s), attempting Jamf ID authentication...\n", resp.Status)
+		log.Printf("[INFO] Local auth failed (%s), attempting Jamf ID authentication...\n", resp.Status)
 		jamfSession, jamfXsrf, err := AuthenticateViaJamfID(DomainName, Username, Password)
 		if err != nil {
 			return fmt.Errorf("authentication failed: %s. Local auth failed and Jamf ID auth failed: %v", resp.Status, err)
@@ -260,7 +203,7 @@ func findCustomerid(DomainName string) {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Println("[ERROR] Error creating request:", err)
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -270,7 +213,7 @@ func findCustomerid(DomainName string) {
 	req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Println("[ERROR] Error sending request:", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -283,7 +226,7 @@ func findCustomerid(DomainName string) {
 	// Read the response body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Println("[ERROR] Error reading response body:", err)
 		return
 	}
 
@@ -292,20 +235,19 @@ func findCustomerid(DomainName string) {
 	var result map[string]interface{}
 	jsonerr := json.Unmarshal(body, &result)
 	if jsonerr != nil {
-		fmt.Println("Error:", jsonerr)
+		log.Println("[ERROR] Error unmarshalling JSON:", jsonerr)
 		return
 	}
 	//check if login user is parent or customer type
 	if result["admin"].(map[string]interface{})["entityType"].(string) == "CUSTOMER" {
 		// Extract entityId
 		entityId := result["admin"].(map[string]interface{})["entityId"].(string)
-		fmt.Println("Customer:", entityId)
 		holdCustomerid = entityId
 	} else {
 		urlCheckParent := (fmt.Sprintf("https://%s/gate/user-service/customer/v2/customers/visible-for-admin", DomainName))
 		req, err := http.NewRequest("GET", urlCheckParent, nil)
 		if err != nil {
-			fmt.Println("Error:", err)
+			log.Println("[ERROR] Error creating request:", err)
 			return
 		}
 		req.Header.Set("Content-Type", "application/json")
@@ -315,7 +257,7 @@ func findCustomerid(DomainName string) {
 		req.AddCookie(&http.Cookie{Name: "XSRF-TOKEN", Value: xsrfToken})
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Println("Error:", err)
+			log.Println("[ERROR] Error sending request:", err)
 			return
 		}
 		defer resp.Body.Close()
@@ -327,17 +269,16 @@ func findCustomerid(DomainName string) {
 		// Read the response body
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			fmt.Println("Error:", err)
+			log.Println("[ERROR] Error reading response body:", err)
 			return
 		}
 
 		// Parse the response JSON to get the customerid
-		// Unmarshal JSON into a map[string]interface{}
 		// Unmarshal JSON into an interface slice
 		var data []map[string]json.RawMessage
 		errmarshall := json.Unmarshal([]byte(body), &data)
 		if errmarshall != nil {
-			fmt.Println("Error:", errmarshall)
+			log.Println("[ERROR] Error unmarshalling JSON:", errmarshall)
 			return
 		}
 
@@ -347,7 +288,7 @@ func findCustomerid(DomainName string) {
 			var leaf bool
 			err := json.Unmarshal(customer["leaf"], &leaf)
 			if err != nil {
-				fmt.Println("Error:", err)
+				log.Println("[ERROR] Error unmarshalling leaf:", err)
 				continue
 			}
 
@@ -355,7 +296,7 @@ func findCustomerid(DomainName string) {
 				var customerId string
 				err := json.Unmarshal(customer["customerId"], &customerId)
 				if err != nil {
-					fmt.Println("Error:", err)
+					log.Println("[ERROR] Error unmarshalling customerId:", err)
 					continue
 				}
 				customerIds = append(customerIds, customerId)
@@ -481,22 +422,3 @@ func MakePAGRequest(req *http.Request) (*http.Response, error) {
 	return resp2, nil
 }
 
-func MakeProtectRequest(req *http.Request) (*http.Response, error) {
-	if protectAuthToken == "" {
-		return nil, fmt.Errorf("error Protect API not authenticated")
-	}
-	client := &http.Client{}
-	req.Header.Set("Content-Type", "application/json")
-	// Add Bearer Token for authentication
-	req.Header.Set("Authorization", protectAuthToken)
-	req.Host = protectDomainname     //swap out domain if something specific is provided
-	req.URL.Host = protectDomainname //in both the path AND the host field
-	fmt.Print(req)
-	resp2, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	//defer resp2.Body.Close()
-
-	return resp2, nil
-}

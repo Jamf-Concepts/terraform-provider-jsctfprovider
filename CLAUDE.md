@@ -30,13 +30,12 @@ This is a Terraform provider for Jamf Security Cloud (JSC) built with `terraform
 
 ### Authentication Model
 
-Three separate authentication methods exist, each for different API backends:
+Two separate authentication methods exist, each for different API backends:
 
 | Method | Credentials | Request Function | Resource Prefix |
 |--------|-------------|------------------|-----------------|
 | Radar API | username/password | `auth.MakeRequest()` | `jsc_` (default) |
 | PAG (Public API Gateway) | applicationid/applicationsecret | `auth.MakePAGRequest()` | `jsc_pag_` |
-| Protect | protectclientid/protectclientpassword | `auth.MakeProtectRequest()` | `jsc_protect_` |
 
 Authentication state is stored in package-level variables in `internal/auth/auth.go`. The Radar API also supports Jamf ID as a fallback authentication flow.
 
