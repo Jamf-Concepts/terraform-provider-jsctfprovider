@@ -125,7 +125,8 @@ func ResourceAdmin() *schema.Resource {
 			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Username (email address) for the admin account.",
+				ForceNew:    true,
+				Description: "Username (email address) for the admin account. Changing this forces a new resource.",
 			},
 			"roles": {
 				Type:        schema.TypeSet,
