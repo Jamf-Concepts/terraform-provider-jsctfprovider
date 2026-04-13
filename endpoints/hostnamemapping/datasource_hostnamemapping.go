@@ -22,8 +22,8 @@ type Mapping struct {
 	Hostname  string   `json:"hostname"`
 	SecureDNS bool     `json:"secureDns"`
 	ZTNA      bool     `json:"ztna"`
-	A         []string `json:"A"`
-	AAAA      []string `json:"AAAA"`
+	A         []string `json:"A,omitempty"`
+	AAAA      []string `json:"AAAA,omitempty"`
 }
 
 type Mappings struct {
