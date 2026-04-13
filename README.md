@@ -1,5 +1,11 @@
 Example TF for JSC
 
+## Installation
+
+For general usage, install from the [Hashicorp Registry](https://registry.terraform.io/providers/Jamf-Concepts/jsctfprovider/latest).
+
+The sections below are for local development.
+
 ## Building
 
 `go build -o terraform-provider-jsctf`
