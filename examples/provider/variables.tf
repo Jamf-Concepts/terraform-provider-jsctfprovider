@@ -28,22 +28,3 @@ variable "jsc_applicationsecret" {
   sensitive   = true
   default     = ""
 }
-
-variable "jsc_protectclientid" {
-  description = "Protect client ID for Protect resources (optional)"
-  type        = string
-  default     = ""
-}
-
-variable "jsc_protectclientpassword" {
-  description = "Protect client password for Protect resources (optional)"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "jsc_protectdomainname" {
-  description = "Protect domain name (e.g., tenant.protect.jamfcloud.com)"
-  type        = string
-  default     = ""
-}

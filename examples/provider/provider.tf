@@ -23,9 +23,4 @@ provider "jsc" {
   # Optional: PAG resources configuration
   applicationid     = var.jsc_applicationid
   applicationsecret = var.jsc_applicationsecret
-
-  # Optional: Protect resources configuration
-  protectclientid       = var.jsc_protectclientid
-  protectclientpassword = var.jsc_protectclientpassword
-  protectdomainname     = var.jsc_protectdomainname
 }
