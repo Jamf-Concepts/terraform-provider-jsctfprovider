@@ -348,8 +348,13 @@ func MakeRequest(req *http.Request) (*http.Response, error) {
 	log.Println("raw host is " + string(req.Host))
 
 	// Send the request using the client
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
+	// Only set default headers if not already set
+	if req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	if req.Header.Get("Accept") == "" {
+		req.Header.Set("Accept", "application/json")
+	}
 	req.Header.Set("X-Xsrf-Token", xsrfToken)
 
 	var resp2 *http.Response
