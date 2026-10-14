@@ -151,8 +151,19 @@ func resourceUEMCRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	if len(configsResp.Configs) == 0 {
-		return fmt.Errorf("no configs found in response")
+	// If this resource's config is no longer present in RADAR (e.g. deleted
+	// out-of-band, such as by a tenant wipe that doesn't go through Terraform),
+	// treat it as gone rather than erroring the whole apply/refresh: clear the
+	// ID so Terraform knows to recreate it.
+	found := false
+	for _, c := range configsResp.Configs {
+		if c.ID == d.Id() {
+			found = true
+			break
+		}
+	}
+	if !found {
+		d.SetId("")
 	}
 
 	return nil

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixed `jsc_uemc` read treating an empty RADAR config list as a hard error; now clears the resource ID so Terraform recreates it when the config was deleted out-of-band (e.g. by a tenant wipe outside Terraform)
+
 ## v0.1.8
 
 - Fixed `jsc_ap` `idptype` causing perpetual replace on case-only diffs
